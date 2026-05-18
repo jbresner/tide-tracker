@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TIDELINE</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" class="brand-icon">
+        <circle cx="15" cy="15" r="13.5" fill="none" stroke="#3b82f6" stroke-width="1.2"/>
+        <path d="M3 19 Q8 11 15 14 Q22 17 27 9" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="15" cy="14.5" r="2.2" fill="#3b82f6"/>
+      </svg>
+      <div class="brand-text">
+        <div class="brand-name">TIDELINE</div>
+        <div class="brand-sub">COASTAL CONDITIONS</div>
+      </div>
+    </div>
+
+
+    <div class="header-meta">
+      <div class="header-date" id="headerDate">—</div>
+      <span class="ver">v1.6</span>
+    </div>
+  </header>
+
+  <!-- META STRIP -->
+  <div class="meta-strip" id="metaStrip">
+    <div class="meta-item">
+      <span class="pulse-dot" id="pulseDot"></span>
+      <span class="meta-val meta-station-name" id="stationName">Acquiring…</span>
+    </div>
+    <div class="meta-sep"></div>
+    <div class="meta-item">
+      <span class="meta-lbl">STATION</span>
+      <span class="meta-val" id="stationId">—</span>
+    </div>
+    <div class="meta-sep"></div>
+    <div class="meta-item">
+      <span class="meta-lbl">COORDINATES</span>
+      <span class="meta-val" id="metaCoords">—</span>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-wrap" id="loadingWrap">
+    <div class="loader-ring"></div>
+    <p class="loader-msg" id="loaderMsg">ACQUIRING POSITION</p>
+  </div>
+
+  <!-- CHART PANEL -->
+  <div class="chart-panel" id="chartPanel" style="display:none">
+
+    <div class="track-row">
+      <div class="track-lbl">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        MOON
+      </div>
+      <div class="track-body"><svg id="moonTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none"></svg></div>
+    </div>
+
+    <div class="track-row">
+      <div class="track-lbl">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        SUN
+      </div>
+      <div class="track-body"><svg id="sunTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none"></svg></div>
+    </div>
+
+    <div class="tide-wrap">
+      <svg class="tide-svg" id="tideSvg" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid meet" aria-label="Tide predictions">
+        <defs>
+          <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#3b82f6" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/>
+          </linearGradient>
+          <clipPath id="tClip"><rect x="64" y="0" width="926" height="278"/></clipPath>
+        </defs>
+        <g id="tideGrid"></g>
+        <g id="tideYAxis"></g>
+        <path id="wFill"  clip-path="url(#tClip)" class="w-fill"/>
+        <path id="wCurve" clip-path="url(#tClip)" class="w-curve"/>
+        <g id="sunOnChart"></g>
+        <g id="hlOnChart"></g>
+        <g id="nowG" style="display:none">
+          <line id="nowL" y1="14" y2="278" class="now-line"/>
+          <circle id="nowC" r="4.5" class="now-dot"/>
+          <rect id="nowBg" class="now-bg" rx="2"/>
+          <text id="nowTime" class="now-time" text-anchor="middle"></text>
+          <text id="nowHt" class="now-ht" text-anchor="middle"></text>
+        </g>
+        <line id="scrubLine" y1="14" y2="284" class="scrub-line" style="display:none"/>
+        <circle id="scrubDot" r="5.5" class="scrub-dot" style="display:none"/>
+        <rect x="64" y="14" width="926" height="264" fill="none" stroke="#1e3a5f" stroke-width="0.8"/>
+      </svg>
+    </div>
+
+    <div class="track-row track-row--axis">
+      <div class="track-lbl" aria-hidden="true"></div>
+      <div class="track-body"><svg id="timeAxis" class="track-svg axis-svg" viewBox="0 0 1000 22" preserveAspectRatio="none"></svg></div>
+    </div>
+
+    <!-- DATE STRIP -->
+    <div class="date-strip-wrap" id="dateStripWrap" style="display:none">
+      <div class="date-strip" id="dateStrip"></div>
+    </div>
+
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row" id="statsRow" style="display:none">
+    <div class="stat-card" id="currentCard">
+      <div class="sc-lbl">CURRENT HEIGHT</div>
+      <div class="sc-val" id="sCurrent">—</div>
+      <div class="sc-unit">ft MLLW</div>
+    </div>
+    <div class="stat-card stat-card--next" id="nextCard">
+      <div class="sc-lbl" id="sNextLbl">NEXT HIGH</div>
+      <div class="sc-val" id="sNextVal">—</div>
+      <div class="sc-unit" id="sNextTime">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-lbl" id="sAfterLbl">FOLLOWING LOW</div>
+      <div class="sc-val" id="sAfterVal">—</div>
+      <div class="sc-unit" id="sAfterTime">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-lbl">DAY'S RANGE</div>
+      <div class="sc-val" id="sRange">—</div>
+      <div class="sc-unit">ft total</div>
+    </div>
+    <div class="stat-card stat-card--moon">
+      <div class="sc-lbl">MOON PHASE</div>
+      <div id="moonBigSvg" class="moon-big-svg"></div>
+      <div class="sc-unit" id="sMoonName">—</div>
+      <div class="sc-unit moon-illum-stat" id="sMoonIllum">—</div>
+    </div>
+    <div class="stat-card stat-card--tidal" id="tidalCard">
+      <div class="sc-lbl">TIDAL FORCE</div>
+      <div class="sc-val" id="sTidalIndex">—</div>
+      <div class="tidal-bar-wrap"><div class="tidal-bar-fill" id="tidalIndexBar" style="width:0%"></div></div>
+      <div class="sc-unit tidal-label" id="sTidalLabel">—</div>
+      <div class="tidal-sub">
+        <span class="tidal-sub-lbl">ALIGN</span><span class="tidal-sub-val" id="sTidalAlign">—</span>
+        <span class="tidal-sub-lbl">DIST</span><span class="tidal-sub-val" id="sTidalDist">—</span>
+      </div>
+    </div>
+  </div>
+
+
+  <footer class="footer">
+    <span>NOAA TIDES &amp; CURRENTS</span>
+    <span class="fdot">·</span>
+    <span id="footerStn">—</span>
+    <span class="fdot">·</span>
+    <span>HEIGHTS IN FEET MLLW</span>
+    <span class="fdot">·</span>
+    <span>SWIPE CHART TO CHANGE DAY</span>
+  </footer>
+
+</div>
+
+<!-- Scrub tooltip: position:fixed = outside all stacking contexts -->
+<div class="scrub-tooltip" id="scrubTooltip" style="display:none">
+  <button class="tt-close" id="ttClose">✕</button>
+  <div class="tt-time" id="ttTime">—</div>
+  <div class="tt-height" id="ttHeight">—</div>
+  <div class="tt-divider"></div>
+  <div class="tt-row" id="ttSun">—</div>
+  <div class="tt-row" id="ttMoon">—</div>
+  <div class="tt-phase" id="ttPhase">—</div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
