@@ -929,6 +929,7 @@ async function init() {
   renderStats(todayData.hilo,todayData.hourly,moon,today);
 
   initScrub();
+  initPanHandle();
   startNowTicker();
   initChartSwipe();
   initStripDrag();
