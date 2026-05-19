@@ -59,24 +59,25 @@
   <!-- CHART PANEL -->
   <div class="chart-panel" id="chartPanel" style="display:none">
 
-    <div class="track-row">
-      <div class="track-lbl">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        MOON
+    <div class="chart-scroll-outer">
+      <!-- fixed labels column -->
+      <div class="chart-labels-col">
+        <div class="track-lbl-fixed">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          MOON
+        </div>
+        <div class="track-lbl-fixed">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          SUN
+        </div>
+        <div class="track-lbl-fixed chart-lbl-spacer"></div>
+        <div class="track-lbl-fixed track-lbl-axis"></div>
       </div>
-      <div class="track-body"><svg id="moonTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="xMinYMid slice"></svg></div>
-    </div>
-
-    <div class="track-row">
-      <div class="track-lbl">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        SUN
-      </div>
-      <div class="track-body"><svg id="sunTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="xMinYMid slice"></svg></div>
-    </div>
-
-    <div class="tide-wrap">
-      <svg class="tide-svg" id="tideSvg" viewBox="0 0 1000 300" preserveAspectRatio="xMinYMid meet" aria-label="Tide predictions">
+      <!-- scrollable content column -->
+      <div class="chart-scroll-inner" id="chartScrollInner">
+        <svg id="moonTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none"></svg>
+        <svg id="sunTrack"  class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none"></svg>
+        <svg class="tide-svg" id="tideSvg" viewBox="0 0 1000 300" preserveAspectRatio="none" aria-label="Tide predictions">
         <defs>
           <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%"   stop-color="#3b82f6" stop-opacity="0.25"/>
@@ -101,12 +102,9 @@
         <circle id="scrubDot" r="5.5" class="scrub-dot" style="display:none"/>
         <rect x="64" y="14" width="926" height="264" fill="none" stroke="#1e3a5f" stroke-width="0.8"/>
       </svg>
-    </div>
-
-    <div class="track-row track-row--axis">
-      <div class="track-lbl" aria-hidden="true"></div>
-      <div class="track-body"><svg id="timeAxis" class="track-svg axis-svg" viewBox="0 0 1000 22" preserveAspectRatio="xMinYMid slice"></svg></div>
-    </div>
+        <svg id="timeAxis" class="track-svg axis-svg" viewBox="0 0 1000 22" preserveAspectRatio="none"></svg>
+      </div><!-- end chart-scroll-inner -->
+    </div><!-- end chart-scroll-outer -->
 
     <!-- DATE STRIP -->
     <div class="date-strip-wrap" id="dateStripWrap" style="display:none">
