@@ -49,7 +49,7 @@ body {
 /* ── HEADER ── */
 .header {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto auto;
   align-items: center;
   gap: 2rem;
   padding: 1.1rem 1.5rem;
@@ -169,6 +169,14 @@ body {
   flex-shrink: 0;
 }
 
+.meta-station-name {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-pri);
+}
+
 .meta-lbl {
   font-family: var(--font-mono);
   font-size: 0.65rem;
@@ -232,7 +240,6 @@ body {
   flex-direction: column;
   gap: 0;
   animation: fadeIn 0.5s ease;
-  overflow: hidden;
 }
 @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
 
@@ -452,60 +459,6 @@ body {
   .meta-strip   { justify-content: center; }
 }
 
-
-/* ── PAN HANDLE (mobile timeline pan) ── */
-.pan-handle-wrap {
-  padding: 6px 0 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  touch-action: none;
-}
-
-.pan-handle-track {
-  width: 80%;
-  height: 6px;
-  background: rgba(255,255,255,0.07);
-  border-radius: 3px;
-  position: relative;
-  cursor: grab;
-}
-.pan-handle-track:active { cursor: grabbing; }
-
-.pan-handle-bar {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  background: #3b82f6;
-  border-radius: 3px;
-  min-width: 40px;
-  transition: left 0.05s linear;
-  /* width and left set by JS based on visible window */
-}
-
-/* Notch marks on the bar */
-.pan-handle-bar::before,
-.pan-handle-bar::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 2px;
-  height: 8px;
-  background: rgba(255,255,255,0.4);
-  border-radius: 1px;
-}
-.pan-handle-bar::before { left: calc(50% - 5px); }
-.pan-handle-bar::after  { left: calc(50% + 3px); }
-
-.pan-handle-hint {
-  font-family: var(--font-mono);
-  font-size: 0.55rem;
-  letter-spacing: 0.12em;
-  color: var(--text-dim);
-}
-
 /* ── DATE STRIP ── */
 .date-strip-wrap {
   background: var(--bg-panel);
@@ -681,4 +634,29 @@ body {
 
 @media (max-width: 720px) {
   .stats-row { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  .chart-panel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .track-row {
+    min-width: 800px;
+    padding-left: 1.5rem;
+  }
+  .tide-wrap {
+    min-width: 800px;
+  }
+  .tide-svg {
+    width: 800px !important;
+    min-width: 800px;
+  }
+  .track-svg {
+    width: 800px !important;
+    min-width: 800px;
+  }
 }

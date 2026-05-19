@@ -723,9 +723,6 @@ async function selectDay(date) {
   const moonRS= calcMoonRiseSet(_lat,_lon,date);
 
   // Update meta strip
-  $('metaMoonPhase').textContent=moon.name;
-  $('metaMoonIllum').textContent=`${Math.round(moon.illumination)}% lit`;
-  const msvg=$('metaMoonSvg'); if(msvg) msvg.innerHTML=moonSVG(moon.fraction);
 
   // Update tracks
   if(sun.riseMins!=null){renderTrack('sunTrack',sun.riseMins,sun.setMins,'rgba(245,158,11,0.2)','#f59e0b');}
@@ -869,9 +866,6 @@ async function init() {
   // Meta strip
   const latDir=lat>=0?'N':'S',lonDir=lon>=0?'E':'W';
   $('metaCoords').textContent=`${Math.abs(lat).toFixed(3)}° ${latDir}  ${Math.abs(lon).toFixed(3)}° ${lonDir}`;
-  $('metaMoonPhase').textContent=moon.name;
-  $('metaMoonIllum').textContent=`${Math.round(moon.illumination)}% lit`;
-  const msvg=$('metaMoonSvg'); if(msvg) msvg.innerHTML=moonSVG(moon.fraction);
   $('metaStrip').style.opacity='1';
 
   if(sun.riseMins!=null){renderTrack('sunTrack',sun.riseMins,sun.setMins,'rgba(245,158,11,0.2)','#f59e0b');}
@@ -885,7 +879,7 @@ async function init() {
   catch(e){setMsg(e.message.toUpperCase());return;}
   _station=station;
   $('stationName').textContent=station.name;
-  $('stationId').textContent=`NOAA TIDE STATION ${station.id} · ${station.state||''}`;
+  $('stationId').textContent=`${station.id} · ${station.state||''}`;
   $('footerStn').textContent=`STATION ${station.id} — ${station.name}`;
 
   // Fetch 14 days: 2 before today through 11 after
@@ -929,7 +923,6 @@ async function init() {
   renderStats(todayData.hilo,todayData.hourly,moon,today);
 
   initScrub();
-  initPanHandle();
   startNowTicker();
   initChartSwipe();
   initStripDrag();
