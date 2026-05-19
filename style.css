@@ -635,28 +635,3 @@ body {
 @media (max-width: 720px) {
   .stats-row { grid-template-columns: 1fr 1fr 1fr; }
 }
-
-/* ── MOBILE ── */
-@media (max-width: 768px) {
-  .chart-panel {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-left: 0;
-    padding-right: 0;
-  }
-  .track-row {
-    min-width: 800px;
-    padding-left: 1.5rem;
-  }
-  .tide-wrap {
-    min-width: 800px;
-  }
-  .tide-svg {
-    width: 800px !important;
-    min-width: 800px;
-  }
-  .track-svg {
-    width: 800px !important;
-    min-width: 800px;
-  }
-}

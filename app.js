@@ -1,4 +1,4 @@
-/* ── TIDELINE v1.7 · app.js ── */
+/* ── TIDELINE v1.6 · app.js ── */
 
 const $ = id => document.getElementById(id);
 
