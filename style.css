@@ -44,13 +44,12 @@ body {
   padding: 0 0 2rem;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
 }
 
 /* ── HEADER ── */
 .header {
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 2rem;
   padding: 1.1rem 1.5rem;
@@ -170,14 +169,6 @@ body {
   flex-shrink: 0;
 }
 
-.meta-station-name {
-  font-family: var(--font-ui);
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--text-pri);
-}
-
 .meta-lbl {
   font-family: var(--font-mono);
   font-size: 0.65rem;
@@ -241,75 +232,54 @@ body {
   flex-direction: column;
   gap: 0;
   animation: fadeIn 0.5s ease;
-  overflow: hidden;
 }
 @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
 
-/* ── CHART SCROLL LAYOUT ── */
-.chart-scroll-outer {
-  display: flex;
-  align-items: stretch;
-  overflow: hidden;
-}
 
-/* Fixed left labels column */
-.chart-labels-col {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  width: 54px;
-}
-
-.track-lbl-fixed {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  color: var(--text-mid);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  padding-right: 6px;
-  flex-shrink: 0;
-}
-.track-lbl-fixed svg { width: 11px; height: 11px; flex-shrink: 0; }
-.track-lbl-fixed { height: 30px; }
-.chart-lbl-spacer { flex: 1; }
-.track-lbl-axis { height: 22px; }
-
-/* Scrollable chart column */
-.chart-scroll-inner {
-  flex: 1;
+/* ── TIME SCROLL ── */
+.time-scroll {
+  width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
 }
-.chart-scroll-inner::-webkit-scrollbar { display: none; }
+.time-scroll::-webkit-scrollbar { display: none; }
 
-/* All SVGs inside scroll: fixed width so they never squish */
+/* ── TRACKS ── */
+.track-row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.track-row--axis { margin-bottom: 0; }
+
+.track-lbl {
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.16em;
+  color: var(--text-mid);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-right: 8px;
+  justify-content: flex-end;
+}
+.track-lbl svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+.track-body { width: 100%; }
+
 .track-svg {
   display: block;
-  min-width: 700px;
-  width: 100%;
-  height: 30px;
-  flex-shrink: 0;
+  width: 800px;
+  height: 26px;
 }
-.axis-svg { height: 22px; }
+.axis-svg { height: 22px; width: 800px; }
 
 /* ── TIDE SVG ── */
-.tide-svg {
-  display: block;
-  min-width: 700px;
-  width: 100%;
-  height: auto;
-  min-height: 220px;
-  flex-shrink: 0;
-  position: relative;
-}
+.tide-wrap { width: 100%; }
+.tide-svg  { display: block; width: 800px; height: 240px; }
 
 .w-fill  { fill: url(#wGrad); }
 .w-curve {
@@ -358,7 +328,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  min-width: 0;
 }
 .stat-card--next { background: #0c1e3a; }
 .stat-card--moon { align-items: center; background: #0d1726; }
@@ -483,45 +452,13 @@ body {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 720px) {
-  .header {
-    grid-template-columns: 1fr auto;
-    gap: 1rem;
-    padding: 0.85rem 1rem;
-  }
-  .header-meta {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    justify-content: flex-end;
-  }
-  .meta-strip {
-    padding: 0.5rem 1rem;
-    flex-wrap: wrap;
-    row-gap: 0.35rem;
-  }
-  .meta-item { padding: 0 0.6rem; }
-  .meta-item:first-child { padding-left: 0; }
-  .chart-panel { padding: 0.6rem 0.75rem 0.4rem; }
-  .stats-row {
-    grid-template-columns: 1fr 1fr 1fr;
-    font-size: 0.9em;
-  }
-  .stat-card--moon { grid-column: span 1; }
-  .stat-card--tidal { grid-column: span 1; }
-  .sc-val { font-size: 1.5rem; }
-  .date-strip-wrap { margin: 0.4rem -0.75rem -0.4rem; }
-}
-
-@media (max-width: 480px) {
-  .header { padding: 0.7rem 0.75rem; }
-  .brand-name { font-size: 1.1rem; }
-  .brand-sub { display: none; }
-  .meta-strip { padding: 0.4rem 0.75rem; }
-  .chart-panel { padding: 0.5rem 0.5rem 0.3rem; }
-  .stats-row { grid-template-columns: 1fr 1fr; }
-  .stat-card--moon { grid-column: span 1; }
-  .stat-card--tidal { grid-column: span 2; }
-  .sc-val { font-size: 1.35rem; }
+  .header { grid-template-columns: 1fr; gap: 0.75rem; text-align: center; }
+  .header-meta { display: flex; align-items: center; gap: 0.75rem; justify-content: center; }
+  .station-row  { justify-content: center; }
+  .stats-row    { grid-template-columns: 1fr 1fr; }
+  .stat-card--moon { grid-column: span 2; }
+  .phase-strip  { grid-template-columns: repeat(4, 1fr); }
+  .meta-strip   { justify-content: center; }
 }
 
 /* ── DATE STRIP ── */
