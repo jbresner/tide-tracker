@@ -639,7 +639,7 @@ function initPan() {
     scrollWrap.style.cursor='';
   }
 
-  scrollWrap.addEventListener('mousedown',e=>{e.preventDefault();scrollWrap.focus({preventScroll:true});onStart(e.clientX);});
+  scrollWrap.addEventListener('mousedown',e=>{e.preventDefault();onStart(e.clientX);});
   window.addEventListener('mousemove',e=>{if(dragging)onMove(e.clientX);});
   window.addEventListener('mouseup',onEnd);
 
@@ -999,9 +999,6 @@ async function init() {
   }
 
   // Init pan interaction
-  // Give scroll wrap a tabIndex so it can receive keyboard events, then focus it
-  const scrollWrapEl2=document.querySelector('.chart-scroll-wrap');
-  if(scrollWrapEl2){scrollWrapEl2.tabIndex=0;scrollWrapEl2.focus({preventScroll:true});}
   initPan();
   renderPointerLine();
   applyPan();
