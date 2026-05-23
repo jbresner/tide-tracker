@@ -284,6 +284,14 @@ body {
   background: #080d19;
   border-top: 1px solid var(--border);
 }
+.info-date {
+  font-family: var(--font-ui);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-sec);
+  letter-spacing: 0.06em;
+  min-width: 110px;
+}
 .info-time {
   font-family: var(--font-ui);
   font-size: 1.1rem;

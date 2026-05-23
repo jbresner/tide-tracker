@@ -573,21 +573,13 @@ function updatePointerInfo() {
 
   const h=interpHeightForDay(key,mins);
   const arrow=risingOrFalling(key,mins);
+  const d=cache.date;
 
+  $('infoDate').textContent=`${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
   $('infoTime').textContent=fmt12fromMins(mins);
   $('infoHeight').textContent=`${h.toFixed(2)} ft`;
   $('infoArrow').textContent=arrow;
   $('infoArrow').className='info-arrow '+(arrow==='↑'?'info-arrow--up':'info-arrow--down');
-
-  // Sun/moon status
-  if(cache.sun){
-    const sunUp=isAboveHorizon(mins,cache.sun.riseMins,cache.sun.setMins);
-    $('infoSun').textContent=sunUp?'☀ Above horizon':'☀ Below horizon';
-  }
-  if(cache.moonRS){
-    const moonUp=isAboveHorizon(mins,cache.moonRS.riseMins,cache.moonRS.setMins);
-    $('infoMoon').textContent=moonUp?'🌑 Moon above horizon':'🌑 Moon below horizon';
-  }
 }
 
 // Update date chip selection
@@ -668,23 +660,9 @@ function initPan() {
   let _keyRafId  = null;   // rAF handle
 
   function smoothPanTo(target) {
-    _keyTarget = Math.max(0, Math.min(_totalW - _visibleW, target));
-    if (_keyRafId) return;           // already animating
-    _isKeyAnimating = true;          // suppress info bar mid-animation
-    function step() {
-      const diff = _keyTarget - _panOffset;
-      if (Math.abs(diff) < 0.5) {
-        _panOffset = _keyTarget;
-        _isKeyAnimating = false;     // settled — allow info bar update
-        applyPan();
-        _keyRafId = null;
-        return;
-      }
-      _panOffset += diff * 0.18;    // ease factor — tweak for faster/slower
-      applyPan();
-      _keyRafId = requestAnimationFrame(step);
-    }
-    _keyRafId = requestAnimationFrame(step);
+    _panOffset = Math.max(0, Math.min(_totalW - _visibleW, target));
+    _keyTarget = _panOffset;
+    applyPan();
   }
 
   window.addEventListener('keydown', e => {
