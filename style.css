@@ -290,7 +290,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0;
-  width: 280px;
+  width: 180px;
   flex-shrink: 0;
 }
 .info-datetime {
