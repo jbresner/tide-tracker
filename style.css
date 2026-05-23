@@ -1,4 +1,4 @@
-/* ── TIDE TRACKER v2.0 · Modern Coastal ── */
+/* ── TIDE TRACKER v1.8 · Modern Coastal ── */
 :root {
   --bg:         #090e18;
   --bg-panel:   #0d1526;
@@ -237,9 +237,11 @@ body {
   display: flex;
   flex-direction: column;
   will-change: transform;
+  flex-shrink: 0;
 }
 .chart-scroll svg {
   flex-shrink: 0;
+  display: block;
 }
 
 /* ── SVG ELEMENTS ── */

@@ -1,4 +1,4 @@
-/* ── TIDE TRACKER v2.0 · app.js ── */
+/* ── TIDE TRACKER v1.8 · app.js ── */
 
 const $ = id => document.getElementById(id);
 
@@ -609,10 +609,11 @@ function renderPointerLine() {
    DRAG / TOUCH PAN
 ══════════════════════════════════════════════ */
 function initPan() {
+  const scrollWrap=document.querySelector('.chart-scroll-wrap');
   const scroll=$('chartScroll');
-  if(!scroll)return;
+  if(!scrollWrap||!scroll)return;
 
-  _visibleW=scroll.offsetWidth;
+  _visibleW=scrollWrap.offsetWidth;
 
   let dragging=false,startX=0,startPan=0;
 
@@ -620,7 +621,7 @@ function initPan() {
     dragging=true;
     startX=clientX;
     startPan=_panOffset;
-    scroll.style.cursor='grabbing';
+    scrollWrap.style.cursor='grabbing';
   }
 
   function onMove(clientX){
@@ -635,20 +636,20 @@ function initPan() {
 
   function onEnd(){
     dragging=false;
-    scroll.style.cursor='';
+    scrollWrap.style.cursor='';
   }
 
-  scroll.addEventListener('mousedown',e=>{e.preventDefault();onStart(e.clientX);});
+  scrollWrap.addEventListener('mousedown',e=>{e.preventDefault();onStart(e.clientX);});
   window.addEventListener('mousemove',e=>{if(dragging)onMove(e.clientX);});
   window.addEventListener('mouseup',onEnd);
 
-  scroll.addEventListener('touchstart',e=>{e.preventDefault();onStart(e.touches[0].clientX);},{passive:false});
-  scroll.addEventListener('touchmove',e=>{e.preventDefault();onMove(e.touches[0].clientX);},{passive:false});
-  scroll.addEventListener('touchend',onEnd);
+  scrollWrap.addEventListener('touchstart',e=>{e.preventDefault();onStart(e.touches[0].clientX);},{passive:false});
+  scrollWrap.addEventListener('touchmove',e=>{e.preventDefault();onMove(e.touches[0].clientX);},{passive:false});
+  scrollWrap.addEventListener('touchend',onEnd);
 
   // Resize handler
   window.addEventListener('resize',()=>{
-    _visibleW=scroll.offsetWidth;
+    _visibleW=scrollWrap.offsetWidth;
     renderPointerLine();
     applyPan();
   });
@@ -940,8 +941,8 @@ async function init() {
   const nowMins=today.getHours()*60+today.getMinutes();
   const todayIndex=_days.indexOf(dateKey(today));
   if(todayIndex>=0){
-    const scroll=$('chartScroll');
-    _visibleW=scroll?scroll.offsetWidth:DAY_W;
+    const scrollWrapEl=document.querySelector('.chart-scroll-wrap');
+    _visibleW=scrollWrapEl?scrollWrapEl.offsetWidth:DAY_W;
     const svgPerPx=_totalW/(_visibleW||1);
     const nowSvgX=todayIndex*DAY_W+(nowMins/1440)*DAY_W;
     _panOffset=Math.max(0,Math.min(_totalW-_visibleW,nowSvgX-_visibleW/2));
