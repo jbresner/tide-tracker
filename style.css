@@ -315,8 +315,14 @@ body {
 .info-sep {
   width: 1px;
   height: 18px;
-  background: var(--border);
+  background: var(--navy-light);
   flex-shrink: 0;
+}
+.info-tideval {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 .info-detail {
   font-family: var(--font-mono);

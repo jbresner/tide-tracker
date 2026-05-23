@@ -576,13 +576,15 @@ function updatePointerInfo() {
   const h=interpHeightForDay(key,mins);
   const arrow=risingOrFalling(key,mins);
   const d=cache.date;
-  const dayName=DAYS[d.getDay()][0]+DAYS[d.getDay()].slice(1).toLowerCase();
-  const monName=MONTHS[d.getMonth()][0]+MONTHS[d.getMonth()].slice(1).toLowerCase();
+  const dayStr=DAYS[d.getDay()];
+  const monStr=MONTHS[d.getMonth()];
+  const dayName=dayStr[0]+dayStr.slice(1).toLowerCase();
+  const monName=monStr[0]+monStr.slice(1).toLowerCase();
 
-  $('infoDatetime').textContent=`${dayName} · ${monName} ${d.getDate()} · ${fmt12fromMins(mins)}`;
-  $('infoHeight').textContent=`${h.toFixed(2)} ft`;
-  $('infoArrow').textContent=arrow;
-  $('infoArrow').className='info-arrow '+(arrow==='↑'?'info-arrow--up':'info-arrow--down');
+  $('infoDatetime').textContent=`${dayName}, ${monName} ${d.getDate()}`;
+  $('infoTime').textContent=fmt12fromMins(mins);
+  $('infoTideVal').textContent=`Tide Level: ${arrow} ${h.toFixed(2)} ft`;
+  $('infoTideVal').className='info-tideval '+(arrow==='↑'?'info-arrow--up':'info-arrow--down');
 }
 
 // Update date chip selection
