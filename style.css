@@ -232,6 +232,26 @@ body {
   left: 50%;
 }
 
+/* Pinned track labels inside the scroll wrap */
+.track-label {
+  position: absolute;
+  left: 4px;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  color: var(--text-mid);
+  pointer-events: none;
+  background: rgba(9,14,24,0.72);
+  padding: 1px 5px 1px 3px;
+  border-radius: 3px;
+}
+.track-label--moon { top: 0;   height: 30px; }
+.track-label--sun  { top: 30px; height: 30px; }
+
 /* Scrollable SVG container */
 .chart-scroll {
   display: flex;
