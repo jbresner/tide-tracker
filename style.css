@@ -216,6 +216,7 @@ body {
   overflow: hidden;
   cursor: grab;
 }
+.chart-scroll-wrap:focus { outline: none; }
 .chart-scroll-wrap:active { cursor: grabbing; }
 
 /* Fixed pointer line — centered, doesn't scroll */
