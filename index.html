@@ -81,9 +81,9 @@
 
       <!-- Scrollable SVG column -->
       <div class="chart-scroll" id="chartScroll">
-        <svg id="moonTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none" style="height:30px"></svg>
-        <svg id="sunTrack"  class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none" style="height:30px"></svg>
-        <svg class="tide-svg" id="tideSvg" viewBox="0 0 1000 310" preserveAspectRatio="none" aria-label="Tide predictions">
+        <svg id="moonTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none" style="height:30px;min-width:700px;width:max(100%,700px)"></svg>
+        <svg id="sunTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none" style="height:30px;min-width:700px;width:max(100%,700px)"></svg>
+        <svg class="tide-svg" id="tideSvg" viewBox="0 0 1000 310" preserveAspectRatio="none" aria-label="Tide predictions" style="min-width:700px;width:max(100%,700px)">
           <defs>
             <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%"   stop-color="#3b82f6" stop-opacity="0.25"/>
@@ -108,7 +108,7 @@
           <circle id="scrubDot" r="5.5" class="scrub-dot" style="display:none"/>
           <rect x="64" y="14" width="926" height="264" fill="none" stroke="#1e3a5f" stroke-width="0.8"/>
         </svg>
-        <svg id="timeAxis" class="track-svg axis-svg" viewBox="0 0 1000 22" preserveAspectRatio="none" style="height:22px"></svg>
+        <svg id="timeAxis" class="track-svg axis-svg" viewBox="0 0 1000 22" preserveAspectRatio="none" style="height:22px;min-width:700px;width:max(100%,700px)"></svg>
       </div>
     </div>
 
