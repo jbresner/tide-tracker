@@ -1,4 +1,4 @@
-/* ── TIDE TRACKER v2.3 · app.js ── */
+/* ── TIDE TRACKER v2.3.2 · app.js ── */
 
 const $ = id => document.getElementById(id);
 
@@ -693,8 +693,8 @@ function initPan() {
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
     const hrInSvg  = DAY_W / 24;          // SVG units per hour
-    const step6    = hrInSvg * 3;        // Shift+arrow = 3 hours
-    const step1    = hrInSvg / 4;        // Arrow = 15 minutes
+    const step6    = hrInSvg;             // Shift+arrow = 1 hour
+    const step1    = DAY_W / (24 * 60);  // Arrow = 1 minute
 
     if (e.key === 'ArrowRight') {
       e.preventDefault();
