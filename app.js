@@ -1,4 +1,4 @@
-/* ── TIDE TRACKER v2.2 · app.js ── */
+/* ── TIDE TRACKER v2.3 · app.js ── */
 
 const $ = id => document.getElementById(id);
 
@@ -502,6 +502,8 @@ function getVisibleW() {
 }
 
 // Apply current pan offset — moves all SVGs together
+let _lastChipKey = null;
+let _isKeyAnimating = false;
 function applyPan() {
   const svgs=['moonTrack','sunTrack','tideSvg','timeAxis'];
   const clampedOffset=Math.max(0,Math.min(_totalW-_visibleW,_panOffset));
@@ -509,8 +511,14 @@ function applyPan() {
     const el=$(id);
     if(el)el.style.transform=`translateX(${-clampedOffset}px)`;
   });
-  updatePointerInfo();
+  if(!_isKeyAnimating)updatePointerInfo();
   updateDateChip();
+  // Scroll date strip to keep selected chip visible — only when day changes
+  const {key}=svgXToDateTime(pointerSvgX());
+  if(key&&key!==_lastChipKey){
+    _lastChipKey=key;
+    updateStripScroll(key,true);
+  }
 }
 
 // Get the absolute SVG X at the pointer (center of visible area)
@@ -662,10 +670,12 @@ function initPan() {
   function smoothPanTo(target) {
     _keyTarget = Math.max(0, Math.min(_totalW - _visibleW, target));
     if (_keyRafId) return;           // already animating
+    _isKeyAnimating = true;          // suppress info bar mid-animation
     function step() {
       const diff = _keyTarget - _panOffset;
       if (Math.abs(diff) < 0.5) {
         _panOffset = _keyTarget;
+        _isKeyAnimating = false;     // settled — allow info bar update
         applyPan();
         _keyRafId = null;
         return;
@@ -827,9 +837,18 @@ function fillChipData() {
   });
 }
 
-function updateStripScroll(key) {
+function updateStripScroll(key, instant=false) {
+  const strip=$('dateStrip');
   const el=document.querySelector(`.day-chip[data-key="${key}"]`);
-  if(el)el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  if(!strip||!el)return;
+  // Scroll the strip container so the chip is centered — never touches page scroll
+  const chipCenter=el.offsetLeft+el.offsetWidth/2;
+  const target=chipCenter-strip.offsetWidth/2;
+  if(instant){
+    strip.scrollLeft=target;
+  } else {
+    strip.scrollTo({left:target,behavior:'smooth'});
+  }
 }
 
 /* ══════════════════════════════════════════════
