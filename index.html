@@ -3,88 +3,179 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TideWatch</title>
+  <title>TIDE TRACKER</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- iOS home screen icon -->
+  <link rel="apple-touch-icon" href="icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TIDE TRACKER" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
+<div class="app">
 
-  <div class="grain"></div>
-
-  <header class="site-header">
-    <div class="header-left">
-      <span class="logo">TIDEWATCH</span>
-      <span class="version">v1.0</span>
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" class="brand-icon">
+        <circle cx="15" cy="15" r="13.5" fill="none" stroke="#3b82f6" stroke-width="1.2"/>
+        <path d="M3 19 Q8 11 15 14 Q22 17 27 9" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="15" cy="14.5" r="2.2" fill="#3b82f6"/>
+      </svg>
+      <div class="brand-text">
+        <div class="brand-name">TIDE TRACKER</div>
+        <div class="brand-sub">COASTAL CONDITIONS</div>
+      </div>
     </div>
-    <div class="header-right">
-      <div class="station-info">
-        <span class="label">STATION</span>
-        <span id="station-name" class="value">—</span>
-      </div>
-      <div class="station-info">
-        <span class="label">DIST</span>
-        <span id="station-dist" class="value">—</span>
-      </div>
+    <div class="header-meta">
+      <div class="header-date" id="headerDate">—</div>
+      <span class="ver">v2.2</span>
     </div>
   </header>
 
-  <main>
+  <!-- META STRIP -->
+  <div class="meta-strip" id="metaStrip">
+    <div class="meta-item">
+      <span class="pulse-dot" id="pulseDot"></span>
+      <span class="meta-val meta-station-name" id="stationName">Acquiring…</span>
+    </div>
+    <div class="meta-sep"></div>
+    <div class="meta-item">
+      <span class="meta-lbl">STATION</span>
+      <span class="meta-val" id="stationId">—</span>
+    </div>
+    <div class="meta-sep"></div>
+    <div class="meta-item">
+      <span class="meta-lbl">COORDINATES</span>
+      <span class="meta-val" id="metaCoords">—</span>
+    </div>
+  </div>
 
-    <!-- Status / loading overlay -->
-    <div id="status-overlay" class="status-overlay">
-      <div class="status-inner">
-        <div class="status-icon" id="status-icon">
-          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="20" cy="20" r="16" stroke="currentColor" stroke-width="2" stroke-dasharray="6 4" class="spin"/>
-            <circle cx="20" cy="20" r="6" fill="currentColor" class="pulse-dot"/>
-          </svg>
+  <!-- LOADING -->
+  <div class="loading-wrap" id="loadingWrap">
+    <div class="loader-ring"></div>
+    <p class="loader-msg" id="loaderMsg">ACQUIRING POSITION</p>
+  </div>
+
+  <!-- CHART PANEL -->
+  <div class="chart-panel" id="chartPanel" style="display:none">
+
+    <!-- Fixed label column + scrollable chart column -->
+    <div class="chart-layout">
+
+      <!-- Fixed labels -->
+      <div class="chart-labels">
+        <div class="chart-label-cell" style="height:30px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          MOON
         </div>
-        <p id="status-text" class="status-text">Requesting location…</p>
-        <button id="retry-btn" class="btn" style="display:none">Try Again</button>
+        <div class="chart-label-cell" style="height:30px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          SUN
+        </div>
+        <div class="chart-label-spacer"></div>
+        <div class="chart-label-cell" style="height:22px"></div>
       </div>
+
+      <!-- Scrollable area with fixed center pointer -->
+      <div class="chart-scroll-wrap">
+        <!-- Fixed center pointer line — sits on top, doesn't scroll -->
+        <div class="pointer-line" id="pointerLine"></div>
+
+        <!-- Scrollable SVGs -->
+        <div class="chart-scroll" id="chartScroll">
+          <svg id="moonTrack" viewBox="0 0 1000 26" style="height:30px;display:block"></svg>
+          <svg id="sunTrack"  viewBox="0 0 1000 26" style="height:30px;display:block"></svg>
+          <svg id="tideSvg" viewBox="0 0 1000 310" aria-label="Tide predictions" style="display:block">
+            <defs>
+              <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stop-color="#3b82f6" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/>
+              </linearGradient>
+              <clipPath id="tClip"><rect x="0" y="0" width="1000" height="310"/></clipPath>
+            </defs>
+            <g id="tideGrid"></g>
+            <g id="tideYAxis"></g>
+            <path id="wFill"  clip-path="url(#tClip)" class="w-fill"/>
+            <path id="wCurve" clip-path="url(#tClip)" class="w-curve"/>
+            <g id="sunOnChart"></g>
+            <g id="hlOnChart"></g>
+            <rect id="tideBorder" x="64" y="14" width="936" height="264" fill="none" stroke="#1e3a5f" stroke-width="0.8"/>
+          </svg>
+          <svg id="timeAxis" viewBox="0 0 1000 22" style="height:22px;display:block"></svg>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Current reading hero -->
-    <section class="hero" id="hero" style="display:none">
-      <div class="hero-reading">
-        <div class="reading-block">
-          <span class="reading-label">CURRENT TIDE</span>
-          <span class="reading-value" id="current-level">—</span>
-          <span class="reading-unit">ft</span>
-        </div>
-        <div class="reading-divider"></div>
-        <div class="reading-block">
-          <span class="reading-label">TREND</span>
-          <span class="reading-value trend-value" id="trend-value">—</span>
-        </div>
-        <div class="reading-divider"></div>
-        <div class="reading-block">
-          <span class="reading-label">NEXT</span>
-          <span class="reading-value" id="next-extreme-level">—</span>
-          <span class="reading-unit">ft</span>
-          <span class="reading-sublabel" id="next-extreme-label">—</span>
-        </div>
-      </div>
-    </section>
+    <!-- INFO BAR — persistent, always visible, updates on scrub -->
+    <div class="info-bar" id="infoBar">
+      <div class="info-time" id="infoTime">—</div>
+      <div class="info-height" id="infoHeight">—</div>
+      <div class="info-arrow" id="infoArrow">—</div>
+      <div class="info-sep"></div>
+      <div class="info-detail" id="infoSun">—</div>
+      <div class="info-detail" id="infoMoon">—</div>
+    </div>
 
-    <!-- Chart container -->
-    <section class="chart-section" id="chart-section" style="display:none">
-      <div class="chart-scroll-wrapper" id="chart-scroll-wrapper">
-        <div class="chart-inner" id="chart-inner">
-          <canvas id="tide-canvas"></canvas>
-          <div class="now-line" id="now-line"></div>
-        </div>
-      </div>
-      <div class="chart-footer">
-        <span class="scroll-hint" id="scroll-hint">← scroll to explore →</span>
-        <span class="data-credit">Data: NOAA CO-OPS</span>
-      </div>
-    </section>
+    <!-- DATE STRIP -->
+    <div class="date-strip-wrap" id="dateStripWrap" style="display:none">
+      <div class="date-strip" id="dateStrip"></div>
+    </div>
 
-  </main>
+  </div>
 
-  <script src="app.js"></script>
+  <!-- STATS -->
+  <div class="stats-row" id="statsRow" style="display:none">
+    <div class="stat-card" id="currentCard">
+      <div class="sc-lbl">CURRENT HEIGHT</div>
+      <div class="sc-val" id="sCurrent">—</div>
+      <div class="sc-unit">ft MLLW</div>
+    </div>
+    <div class="stat-card stat-card--next" id="nextCard">
+      <div class="sc-lbl" id="sNextLbl">NEXT HIGH</div>
+      <div class="sc-val" id="sNextVal">—</div>
+      <div class="sc-unit" id="sNextTime">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-lbl" id="sAfterLbl">FOLLOWING LOW</div>
+      <div class="sc-val" id="sAfterVal">—</div>
+      <div class="sc-unit" id="sAfterTime">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-lbl">DAY'S RANGE</div>
+      <div class="sc-val" id="sRange">—</div>
+      <div class="sc-unit">ft total</div>
+    </div>
+    <div class="stat-card stat-card--moon">
+      <div class="sc-lbl">MOON PHASE</div>
+      <div id="moonBigSvg" class="moon-big-svg"></div>
+      <div class="sc-unit" id="sMoonName">—</div>
+      <div class="sc-unit moon-illum-stat" id="sMoonIllum">—</div>
+    </div>
+    <div class="stat-card stat-card--tidal" id="tidalCard">
+      <div class="sc-lbl">TIDAL FORCE</div>
+      <div class="sc-val" id="sTidalIndex">—</div>
+      <div class="tidal-bar-wrap"><div class="tidal-bar-fill" id="tidalIndexBar" style="width:0%"></div></div>
+      <div class="sc-unit tidal-label" id="sTidalLabel">—</div>
+      <div class="tidal-sub">
+        <span class="tidal-sub-lbl">ALIGN</span><span class="tidal-sub-val" id="sTidalAlign">—</span>
+        <span class="tidal-sub-lbl">DIST</span><span class="tidal-sub-val" id="sTidalDist">—</span>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <span>NOAA TIDES &amp; CURRENTS</span>
+    <span class="fdot">·</span>
+    <span id="footerStn">—</span>
+    <span class="fdot">·</span>
+    <span>HEIGHTS IN FEET MLLW</span>
+  </footer>
+
+</div>
+<script src="app.js"></script>
 </body>
 </html>
