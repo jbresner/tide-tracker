@@ -280,9 +280,11 @@ body {
   display: flex;
   align-items: center;
   gap: 0;
-  padding: 0.55rem 1.5rem;
+  padding: 0 1.5rem;
+  height: 38px;
   background: #080d19;
   border-top: 1px solid var(--border);
+  overflow: hidden;
 }
 .info-datetime {
   font-family: var(--font-body);
@@ -290,14 +292,15 @@ body {
   font-weight: 500;
   color: var(--text-sec);
   letter-spacing: 0.02em;
+  line-height: 38px;
+  white-space: nowrap;
 }
 .info-time-val {
   margin-left: 0.6rem;
 }
 .info-tide-fixed {
-  margin-left: auto;
-  min-width: 200px;
-  text-align: left;
+  margin-left: 3rem;
+  white-space: nowrap;
 }
 .info-detail {
   font-family: var(--font-mono);
