@@ -279,7 +279,7 @@ body {
 .info-bar {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 0;
   padding: 0.55rem 1.5rem;
   background: #080d19;
   border-top: 1px solid var(--border);
@@ -290,13 +290,14 @@ body {
   font-weight: 500;
   color: var(--text-sec);
   letter-spacing: 0.02em;
-  min-width: 120px;
 }
 .info-time-val {
-  min-width: 90px;
+  margin-left: 0.6rem;
 }
 .info-tide-fixed {
+  margin-left: auto;
   min-width: 200px;
+  text-align: left;
 }
 .info-detail {
   font-family: var(--font-mono);
