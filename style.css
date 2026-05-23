@@ -185,7 +185,7 @@ body {
 .chart-layout {
   display: flex;
   align-items: stretch;
-  padding: 0 0 0 1.5rem;
+  padding: 0;
 }
 
 /* Fixed label column */
@@ -280,7 +280,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.55rem 1.5rem 0.55rem calc(54px + 1.5rem);
+  padding: 0.55rem 1.5rem 0.55rem 1.5rem;
   background: #080d19;
   border-top: 1px solid var(--border);
 }
@@ -459,7 +459,7 @@ body {
   .meta-strip { padding: 0.5rem 1rem; }
   .meta-item { padding: 0 0.6rem; }
   .chart-layout { padding-left: 0.75rem; }
-  .info-bar { padding-left: calc(54px + 0.75rem); flex-wrap: wrap; gap: 0.5rem; }
+  .info-bar { padding-left: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
   .stats-row { grid-template-columns: 1fr 1fr 1fr; }
   .stat-card--moon { grid-column: span 1; }
   .sc-val { font-size: 1.5rem; }
