@@ -29,11 +29,9 @@
         <div class="brand-sub">COASTAL CONDITIONS</div>
       </div>
     </div>
-
-
     <div class="header-meta">
       <div class="header-date" id="headerDate">—</div>
-      <span class="ver">v1.7</span>
+      <span class="ver">v2.0</span>
     </div>
   </header>
 
@@ -64,8 +62,10 @@
   <!-- CHART PANEL -->
   <div class="chart-panel" id="chartPanel" style="display:none">
 
+    <!-- Fixed label column + scrollable chart column -->
     <div class="chart-layout">
-      <!-- Fixed label column -->
+
+      <!-- Fixed labels -->
       <div class="chart-labels">
         <div class="chart-label-cell" style="height:30px">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -75,41 +75,49 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
           SUN
         </div>
-        <div class="chart-label-cell chart-label-spacer"></div>
+        <div class="chart-label-spacer"></div>
         <div class="chart-label-cell" style="height:22px"></div>
       </div>
 
-      <!-- Scrollable SVG column -->
-      <div class="chart-scroll" id="chartScroll">
-        <svg id="moonTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none" style="height:30px;min-width:700px;width:max(100%,700px)"></svg>
-        <svg id="sunTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none" style="height:30px;min-width:700px;width:max(100%,700px)"></svg>
-        <svg class="tide-svg" id="tideSvg" viewBox="0 0 1000 310" preserveAspectRatio="none" aria-label="Tide predictions" style="min-width:700px;width:max(100%,700px)">
-          <defs>
-            <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stop-color="#3b82f6" stop-opacity="0.25"/>
-              <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/>
-            </linearGradient>
-            <clipPath id="tClip"><rect x="64" y="0" width="926" height="278"/></clipPath>
-          </defs>
-          <g id="tideGrid"></g>
-          <g id="tideYAxis"></g>
-          <path id="wFill"  clip-path="url(#tClip)" class="w-fill"/>
-          <path id="wCurve" clip-path="url(#tClip)" class="w-curve"/>
-          <g id="sunOnChart"></g>
-          <g id="hlOnChart"></g>
-          <g id="nowG" style="display:none">
-            <line id="nowL" y1="14" y2="278" class="now-line"/>
-            <circle id="nowC" r="4.5" class="now-dot"/>
-            <rect id="nowBg" class="now-bg" rx="2"/>
-            <text id="nowTime" class="now-time" text-anchor="middle"></text>
-            <text id="nowHt" class="now-ht" text-anchor="middle"></text>
-          </g>
-          <line id="scrubLine" y1="14" y2="284" class="scrub-line" style="display:none"/>
-          <circle id="scrubDot" r="5.5" class="scrub-dot" style="display:none"/>
-          <rect x="64" y="14" width="926" height="264" fill="none" stroke="#1e3a5f" stroke-width="0.8"/>
-        </svg>
-        <svg id="timeAxis" class="track-svg axis-svg" viewBox="0 0 1000 22" preserveAspectRatio="none" style="height:22px;min-width:700px;width:max(100%,700px)"></svg>
+      <!-- Scrollable area with fixed center pointer -->
+      <div class="chart-scroll-wrap">
+        <!-- Fixed center pointer line — sits on top, doesn't scroll -->
+        <div class="pointer-line" id="pointerLine"></div>
+
+        <!-- Scrollable SVGs -->
+        <div class="chart-scroll" id="chartScroll">
+          <svg id="moonTrack" viewBox="0 0 1000 26" style="height:30px;display:block"></svg>
+          <svg id="sunTrack"  viewBox="0 0 1000 26" style="height:30px;display:block"></svg>
+          <svg id="tideSvg" viewBox="0 0 1000 310" aria-label="Tide predictions" style="display:block">
+            <defs>
+              <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stop-color="#3b82f6" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/>
+              </linearGradient>
+              <clipPath id="tClip"><rect x="0" y="0" width="1000" height="310"/></clipPath>
+            </defs>
+            <g id="tideGrid"></g>
+            <g id="tideYAxis"></g>
+            <path id="wFill"  clip-path="url(#tClip)" class="w-fill"/>
+            <path id="wCurve" clip-path="url(#tClip)" class="w-curve"/>
+            <g id="sunOnChart"></g>
+            <g id="hlOnChart"></g>
+            <rect id="tideBorder" x="64" y="14" width="936" height="264" fill="none" stroke="#1e3a5f" stroke-width="0.8"/>
+          </svg>
+          <svg id="timeAxis" viewBox="0 0 1000 22" style="height:22px;display:block"></svg>
+        </div>
       </div>
+
+    </div>
+
+    <!-- INFO BAR — persistent, always visible, updates on scrub -->
+    <div class="info-bar" id="infoBar">
+      <div class="info-time" id="infoTime">—</div>
+      <div class="info-height" id="infoHeight">—</div>
+      <div class="info-arrow" id="infoArrow">—</div>
+      <div class="info-sep"></div>
+      <div class="info-detail" id="infoSun">—</div>
+      <div class="info-detail" id="infoMoon">—</div>
     </div>
 
     <!-- DATE STRIP -->
@@ -159,30 +167,15 @@
     </div>
   </div>
 
-
   <footer class="footer">
     <span>NOAA TIDES &amp; CURRENTS</span>
     <span class="fdot">·</span>
     <span id="footerStn">—</span>
     <span class="fdot">·</span>
     <span>HEIGHTS IN FEET MLLW</span>
-    <span class="fdot">·</span>
-    <span>SWIPE CHART TO CHANGE DAY</span>
   </footer>
 
 </div>
-
-<!-- Scrub tooltip: position:fixed = outside all stacking contexts -->
-<div class="scrub-tooltip" id="scrubTooltip" style="display:none">
-  <button class="tt-close" id="ttClose">✕</button>
-  <div class="tt-time" id="ttTime">—</div>
-  <div class="tt-height" id="ttHeight">—</div>
-  <div class="tt-divider"></div>
-  <div class="tt-row" id="ttSun">—</div>
-  <div class="tt-row" id="ttMoon">—</div>
-  <div class="tt-phase" id="ttPhase">—</div>
-</div>
-
 <script src="app.js"></script>
 </body>
 </html>
