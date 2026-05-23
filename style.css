@@ -286,6 +286,13 @@ body {
   border-top: 1px solid var(--border);
   overflow: hidden;
 }
+.info-datetime-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 280px;
+  flex-shrink: 0;
+}
 .info-datetime {
   font-family: var(--font-body);
   font-size: 0.95rem;
@@ -299,7 +306,6 @@ body {
   margin-left: 0.6rem;
 }
 .info-tide-fixed {
-  margin-left: 3rem;
   white-space: nowrap;
 }
 .info-detail {
