@@ -1,4 +1,4 @@
-/* ── TIDE TRACKER v2.3 · app.js ── */
+/* ── TIDE TRACKER v2.2 · app.js ── */
 
 const $ = id => document.getElementById(id);
 
@@ -511,9 +511,6 @@ function applyPan() {
   });
   updatePointerInfo();
   updateDateChip();
-  // Keep date strip scrolled to the active chip
-  const {key}=svgXToDateTime(pointerSvgX());
-  if(key)updateStripScroll(key, true);
 }
 
 // Get the absolute SVG X at the pointer (center of visible area)
@@ -642,7 +639,7 @@ function initPan() {
     scrollWrap.style.cursor='';
   }
 
-  scrollWrap.addEventListener('mousedown',e=>{e.preventDefault();scrollWrap.focus({preventScroll:true});onStart(e.clientX);});
+  scrollWrap.addEventListener('mousedown',e=>{e.preventDefault();onStart(e.clientX);});
   window.addEventListener('mousemove',e=>{if(dragging)onMove(e.clientX);});
   window.addEventListener('mouseup',onEnd);
 
@@ -830,9 +827,9 @@ function fillChipData() {
   });
 }
 
-function updateStripScroll(key, instant=false) {
+function updateStripScroll(key) {
   const el=document.querySelector(`.day-chip[data-key="${key}"]`);
-  if(el)el.scrollIntoView({behavior:instant?'instant':'smooth',block:'nearest',inline:'center'});
+  if(el)el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
 }
 
 /* ══════════════════════════════════════════════
@@ -1002,9 +999,6 @@ async function init() {
   }
 
   // Init pan interaction
-  // Give scroll wrap a tabIndex so it can receive keyboard events, then focus it
-  const scrollWrapEl2=document.querySelector('.chart-scroll-wrap');
-  if(scrollWrapEl2){scrollWrapEl2.tabIndex=0;scrollWrapEl2.focus({preventScroll:true});}
   initPan();
   renderPointerLine();
   applyPan();
