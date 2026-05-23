@@ -1,967 +1,508 @@
-/* ── TIDE TRACKER v1.8 · app.js ── */
+/**
+ * TideWatch v1.0
+ * Geolocation → Nearest NOAA station → Tide data → Canvas chart
+ */
+
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+
+const CFG = {
+  // Hours to show on each side of "now" by viewport width
+  windowHours: {
+    desktop: 12,   // ≥ 768px
+    mobile:  3,    // < 768px
+  },
+  // Total hours to fetch (centered on now)
+  fetchHours: { back: 48, forward: 48 },
+
+  // Canvas dimensions
+  canvas: {
+    height: 320,
+    paddingTop: 24,
+    paddingBottom: 52,   // room for x-axis labels
+    paddingLeft: 60,     // room for y-axis labels
+    paddingRight: 24,
+    pxPerHour: {
+      desktop: 60,
+      mobile: 80,
+    },
+  },
+
+  // NOAA API
+  noaa: {
+    stationsUrl: 'https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json?type=waterlevels&units=english',
+    dataUrl:     'https://api.tidesandcurrents.noaa.gov/api/prod/datagetter',
+    product:     'water_level',
+    datum:       'MLLW',
+    units:       'english',
+    timeZone:    'LST/LDT',
+    format:      'json',
+    interval:    '6',     // 6-minute interval
+  },
+
+  colors: {
+    glow:      '#00d4ff',
+    glowDim:   'rgba(0,212,255,0.15)',
+    tideFill:  'rgba(0,180,230,0.18)',
+    tideLine:  '#00d4ff',
+    gridLine:  'rgba(0,212,255,0.07)',
+    axisText:  '#4a6a7a',
+    axisTextBright: '#c8dde8',
+    accent:    '#f0a500',
+    highMark:  'rgba(240,165,0,0.6)',
+    lowMark:   'rgba(0,180,255,0.5)',
+  },
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+
+let state = {
+  lat: null,
+  lon: null,
+  station: null,
+  readings: [],   // [{t: Date, v: number}]
+  isMobile: window.innerWidth < 768,
+};
+
+// ─── DOM REFS ─────────────────────────────────────────────────────────────────
 
 const $ = id => document.getElementById(id);
+const statusOverlay  = $('status-overlay');
+const statusText     = $('status-text');
+const retryBtn       = $('retry-btn');
+const hero           = $('hero');
+const chartSection   = $('chart-section');
+const stationName    = $('station-name');
+const stationDist    = $('station-dist');
+const currentLevel   = $('current-level');
+const trendValue     = $('trend-value');
+const nextLevel      = $('next-extreme-level');
+const nextLabel      = $('next-extreme-label');
+const canvas         = $('tide-canvas');
+const ctx            = canvas.getContext('2d');
+const nowLine        = $('now-line');
+const chartInner     = $('chart-inner');
+const scrollWrapper  = $('chart-scroll-wrapper');
 
-/* ══════════════════════════════════════════════
-   CONSTANTS
-══════════════════════════════════════════════ */
-const DAYS   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+// ─── UTILS ────────────────────────────────────────────────────────────────────
 
-// Chart geometry (SVG units per day)
-const DAY_W  = 1000;   // SVG units wide per day
-const CHART_H = 310;   // SVG height
-const Y0 = 14, Y1 = 278, CH = Y1 - Y0;  // chart area top/bottom/height
-const TRACK_H = 26;    // moon/sun track height
-const AXIS_H  = 22;    // time axis height
-const LABEL_W = 58;    // fixed label column width (px)
+function setStatus(msg) { statusText.textContent = msg; }
 
-// Pointer is at center of visible area
-// On load we position the chart so NOW is under the pointer
-
-/* ══════════════════════════════════════════════
-   UTILITIES
-══════════════════════════════════════════════ */
-function fmt12fromMins(totalMins) {
-  totalMins = ((totalMins % 1440) + 1440) % 1440;
-  let h = Math.floor(totalMins / 60), m = Math.round(totalMins % 60);
-  if (m === 60) { h++; m = 0; } h = h % 24;
-  const ap = h >= 12 ? 'PM' : 'AM';
-  return `${(h%12)||12}:${String(m).padStart(2,'0')} ${ap}`;
+function showError(msg) {
+  setStatus(msg);
+  retryBtn.style.display = 'inline-block';
 }
 
-function fmt12(dateStr) {
-  const d = new Date(dateStr.replace(' ','T'));
-  let h = d.getHours(), m = d.getMinutes(), ap = h>=12?'PM':'AM';
-  h = h%12||12;
-  return `${h}:${String(m).padStart(2,'0')} ${ap}`;
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function fmtNoaaDate(d) {
+  // YYYYMMDD HH:MM
+  return `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
-function dateKey(date) {
-  return `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}`;
+function fmtHour(d) {
+  let h = d.getHours(), ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${h}${ampm}`;
 }
 
-function offsetDate(base, days) {
-  const d = new Date(base); d.setDate(d.getDate()+days); return d;
+function fmtDayShort(d) {
+  return ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
 }
 
-function toJD(date) { return date.getTime()/86400000 + 2440587.5; }
-function setMsg(msg) { $('loaderMsg').textContent = msg; }
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
 
-/* ══════════════════════════════════════════════
-   CLOCK
-══════════════════════════════════════════════ */
-function startClock() {
-  function tick() {
-    const n = new Date();
-    $('headerDate').textContent = `${DAYS[n.getDay()]} ${String(n.getDate()).padStart(2,'0')} ${MONTHS[n.getMonth()]} ${n.getFullYear()}`;
+// ─── GEOLOCATION ─────────────────────────────────────────────────────────────
+
+async function geolocate() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
+    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 15000 });
+  });
+}
+
+// ─── NOAA STATIONS ───────────────────────────────────────────────────────────
+
+async function fetchStations() {
+  const res = await fetch(CFG.noaa.stationsUrl);
+  if (!res.ok) throw new Error('Failed to fetch station list');
+  const data = await res.json();
+  return data.stations;
+}
+
+function findNearest(stations, lat, lon) {
+  let best = null, bestDist = Infinity;
+  for (const s of stations) {
+    const d = haversineKm(lat, lon, parseFloat(s.lat), parseFloat(s.lng));
+    if (d < bestDist) { bestDist = d; best = s; }
   }
-  tick(); setInterval(tick, 60000);
+  return { station: best, distKm: bestDist };
 }
 
-/* ══════════════════════════════════════════════
-   ASTRONOMY — Sun
-══════════════════════════════════════════════ */
-function calcSun(lat, lon, date) {
-  const DEG = Math.PI/180;
-  const JD = toJD(date), n = JD-2451545.0;
-  const L = ((280.460+0.9856474*n)%360+360)%360;
-  const g = ((357.528+0.9856003*n)%360+360)%360;
-  const lam = L+1.915*Math.sin(g*DEG)+0.02*Math.sin(2*g*DEG);
-  const eps = 23.439-0.0000004*n;
-  const sinDec = Math.sin(eps*DEG)*Math.sin(lam*DEG);
-  const dec = Math.asin(sinDec);
-  const cosH = (Math.sin(-0.833*DEG)-Math.sin(lat*DEG)*sinDec)/(Math.cos(lat*DEG)*Math.cos(dec));
-  if (cosH>1)  return {riseMins:null,setMins:null,polar:'night'};
-  if (cosH<-1) return {riseMins:null,setMins:null,polar:'day'};
-  const H = Math.acos(cosH)/DEG;
-  const RA = Math.atan2(Math.cos(eps*DEG)*Math.sin(lam*DEG),Math.cos(lam*DEG))/DEG/15;
-  const EoT = L/15-((RA+24)%24);
-  const localHrs = -date.getTimezoneOffset()/60;
-  const noon = 12-EoT-lon/15+localHrs;
-  return {riseMins:(noon-H/15)*60, setMins:(noon+H/15)*60};
+// ─── NOAA TIDE DATA ───────────────────────────────────────────────────────────
+
+async function fetchTideData(stationId) {
+  const now = new Date();
+  const begin = new Date(now.getTime() - CFG.fetchHours.back  * 3600 * 1000);
+  const end   = new Date(now.getTime() + CFG.fetchHours.forward * 3600 * 1000);
+
+  const params = new URLSearchParams({
+    product:     CFG.noaa.product,
+    application: 'tidewatch',
+    begin_date:  fmtNoaaDate(begin),
+    end_date:    fmtNoaaDate(end),
+    datum:       CFG.noaa.datum,
+    station:     stationId,
+    time_zone:   CFG.noaa.timeZone,
+    interval:    CFG.noaa.interval,
+    units:       CFG.noaa.units,
+    format:      CFG.noaa.format,
+  });
+
+  const url = `${CFG.noaa.dataUrl}?${params}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch tide data');
+  const data = await res.json();
+
+  if (data.error) throw new Error(data.error.message || 'NOAA error');
+
+  return (data.data || []).map(d => ({
+    t: new Date(d.t),
+    v: parseFloat(d.v),
+  })).filter(d => !isNaN(d.v));
 }
 
-/* ══════════════════════════════════════════════
-   ASTRONOMY — Moon phase
-══════════════════════════════════════════════ */
-function calcMoonPhase(date) {
-  const JD=toJD(date), T=(JD-2451545.0)/36525;
-  const DEG=Math.PI/180;
-  const D=((297.85036+445267.111480*T-0.0019142*T*T+T*T*T/189474)%360+360)%360;
-  const M=((357.52772+35999.050340*T-0.0001603*T*T-T*T*T/300000)%360+360)%360;
-  const Mp=((134.96298+477198.867398*T+0.0086972*T*T+T*T*T/56250)%360+360)%360;
-  const elong=((D+6.289*Math.sin(Mp*DEG)-2.100*Math.sin(M*DEG)+1.274*Math.sin((2*D-Mp)*DEG)+0.658*Math.sin(2*D*DEG)+0.214*Math.sin(2*Mp*DEG)+0.110*Math.sin(D*DEG))%360+360)%360;
-  const illumination=(1-Math.cos(elong*DEG))/2;
-  const knownNew=2451550.09766, syn=29.53058867;
-  const age=((JD-knownNew)%syn+syn)%syn;
-  const fraction=age/syn;
-  let name,emoji;
-  if(age<1.85){name='New Moon';emoji='🌑';}
-  else if(age<7.38){name='Waxing Crescent';emoji='🌒';}
-  else if(age<9.22){name='First Quarter';emoji='🌓';}
-  else if(age<14.77){name='Waxing Gibbous';emoji='🌔';}
-  else if(age<16.61){name='Full Moon';emoji='🌕';}
-  else if(age<22.15){name='Waning Gibbous';emoji='🌖';}
-  else if(age<23.99){name='Last Quarter';emoji='🌗';}
-  else{name='Waning Crescent';emoji='🌘';}
-  return {age,fraction,illumination:illumination*100,name,emoji};
-}
+// ─── HERO STATS ───────────────────────────────────────────────────────────────
 
-/* ══════════════════════════════════════════════
-   ASTRONOMY — Moonrise/Moonset (Meeus)
-══════════════════════════════════════════════ */
-function calcMoonRiseSet(lat, lon, date) {
-  const DEG=Math.PI/180;
-  const localHrs=-date.getTimezoneOffset()/60;
-  function moonCoords(JD){
-    const T=(JD-2451545.0)/36525;
-    const Lo=((218.3165+481267.8813*T)%360+360)%360;
-    const M=((357.5291+35999.0503*T)%360+360)%360;
-    const Mp=((134.9634+477198.8676*T)%360+360)%360;
-    const D=((297.8502+445267.1115*T)%360+360)%360;
-    const F=((93.2721+483202.0175*T)%360+360)%360;
-    const lam=Lo+6.289*Math.sin(Mp*DEG)-1.274*Math.sin((2*D-Mp)*DEG)+0.658*Math.sin(2*D*DEG)-0.186*Math.sin(M*DEG)-0.059*Math.sin((2*D-2*Mp)*DEG)-0.057*Math.sin((2*D-Mp-M)*DEG)+0.053*Math.sin((2*D+Mp)*DEG)+0.046*Math.sin((2*D-M)*DEG)+0.041*Math.sin((Mp-M)*DEG)-0.035*Math.sin(D*DEG)-0.031*Math.sin((Mp+M)*DEG)-0.015*Math.sin((2*F-2*D)*DEG)+0.011*Math.sin((Mp-4*D)*DEG);
-    const beta=5.128*Math.sin(F*DEG)+0.280*Math.sin((Mp+F)*DEG)+0.277*Math.sin((Mp-F)*DEG)+0.173*Math.sin((2*D-F)*DEG)+0.055*Math.sin((2*D-Mp+F)*DEG)+0.046*Math.sin((2*D-Mp-F)*DEG);
-    const dist=385001-20905*Math.cos(Mp*DEG);
-    const pi=Math.asin(6378.14/dist)/DEG;
-    const eps=23.4393-0.0130042*T;
-    const ra=Math.atan2(Math.sin(lam*DEG)*Math.cos(eps*DEG)-Math.tan(beta*DEG)*Math.sin(eps*DEG),Math.cos(lam*DEG))/DEG;
-    const dec=Math.asin(Math.sin(beta*DEG)*Math.cos(eps*DEG)+Math.cos(beta*DEG)*Math.sin(eps*DEG)*Math.sin(lam*DEG))/DEG;
-    return{ra:((ra%360)+360)%360,dec,pi};
-  }
-  function GST0(JD0){const T=(JD0-2451545.0)/36525;return((100.4606184+36000.77004*T+0.000387933*T*T)%360+360)%360;}
-  const JD0_local=toJD(new Date(date.getFullYear(),date.getMonth(),date.getDate(),0,0,0));
-  const JD0_UT=JD0_local+date.getTimezoneOffset()/1440;
-  const mc=[-1,0,1].map(i=>moonCoords(JD0_UT+i));
-  const gst0=GST0(JD0_UT);
-  const latRad=lat*DEG;
-  const h0=0.7275*mc[1].pi-0.5667;
-  function riseset(isRise){
-    function interp3(y1,y2,y3,n){const a=y2-y1,b=y3-y2,c=b-a;return y2+n/2*(a+b+c*n);}
-    let ra0=mc[0].ra,ra1=mc[1].ra,ra2=mc[2].ra;
-    if(ra1-ra0>180)ra0+=360;if(ra2-ra1>180)ra1+=360;
-    if(ra0-ra1>180)ra0-=360;if(ra1-ra2>180)ra1-=360;
-    const dec1Rad=mc[1].dec*DEG;
-    const cosH0=(Math.sin(h0*DEG)-Math.sin(latRad)*Math.sin(dec1Rad))/(Math.cos(latRad)*Math.cos(dec1Rad));
-    if(cosH0<-1||cosH0>1)return null;
-    const H0=Math.acos(cosH0)/DEG;
-    const m0=((mc[1].ra-lon-gst0)%360+360)%360/360;
-    let m=((( isRise?m0-H0/360:m0+H0/360)%1)+1)%1;
-    for(let i=0;i<2;i++){
-      const theta=(gst0+360.985647*m)%360;
-      const nn=m+date.getTimezoneOffset()/1440;
-      const ra_i=interp3(ra0,ra1,ra2,nn);
-      const dec_i=interp3(mc[0].dec,mc[1].dec,mc[2].dec,nn);
-      const H=((theta+lon-ra_i)%360+360)%360;
-      const Hpm=H>180?H-360:H;
-      const h=Math.asin(Math.sin(latRad)*Math.sin(dec_i*DEG)+Math.cos(latRad)*Math.cos(dec_i*DEG)*Math.cos(Hpm*DEG))/DEG;
-      const dm=(h-h0)/(360*Math.cos(dec_i*DEG)*Math.cos(latRad)*Math.sin(Hpm*DEG));
-      m=((m+dm)%1+1)%1;
-    }
-    return m;
-  }
-  function utToLocal(frac){
-    if(frac===null)return null;
-    return((frac*1440+localHrs*60)%1440+1440)%1440;
-  }
-  return{riseMins:utToLocal(riseset(true)),setMins:utToLocal(riseset(false))};
-}
+function updateHero(readings) {
+  const now = Date.now();
+  // Find the reading closest to now
+  let closest = readings.reduce((a, b) => Math.abs(b.t - now) < Math.abs(a.t - now) ? b : a);
+  currentLevel.textContent = closest.v.toFixed(2);
 
-/* ══════════════════════════════════════════════
-   ASTRONOMY — Tidal Index
-══════════════════════════════════════════════ */
-function calcTidalIndex(date) {
-  const JD=toJD(date),T=(JD-2451545.0)/36525;
-  const DEG=Math.PI/180;
-  const D=((297.85036+445267.111480*T-0.0019142*T*T+T*T*T/189474)%360+360)%360;
-  const M=((357.52772+35999.050340*T-0.0001603*T*T-T*T*T/300000)%360+360)%360;
-  const Mp=((134.96298+477198.867398*T+0.0086972*T*T+T*T*T/56250)%360+360)%360;
-  const elong=((D+6.289*Math.sin(Mp*DEG)-2.100*Math.sin(M*DEG)+1.274*Math.sin((2*D-Mp)*DEG)+0.658*Math.sin(2*D*DEG)+0.214*Math.sin(2*Mp*DEG)+0.110*Math.sin(D*DEG))%360+360)%360;
-  const alignment=Math.abs(Math.cos(elong*DEG));
-  const dist=385001-20905*Math.cos(Mp*DEG)-3699*Math.cos((2*D-Mp)*DEG)-2956*Math.cos(2*D*DEG);
-  const distFactor=Math.pow(384400/dist,3);
-  const distNorm=Math.max(0,Math.min(1,(distFactor-0.85)/(1.18-0.85)));
-  const index=Math.max(0,Math.min(100,Math.round((alignment*0.70+distNorm*0.30)*100)));
-  let label,cls;
-  if(index>=68){label='Spring';cls='tidal-spring';}
-  else if(index<=32){label='Neap';cls='tidal-neap';}
-  else{label='Moderate';cls='tidal-mod';}
-  return{index,label,cls,alignPct:Math.round(alignment*100),distKm:Math.round(dist)};
-}
-
-/* ══════════════════════════════════════════════
-   MOON SVG ICONS
-══════════════════════════════════════════════ */
-function moonSVG(fraction) {
-  const r=9,cx=10,cy=10,w=20,h=20;
-  const dark='#2a3f55',lit='#94a3b8';
-  const waning=fraction>0.5;
-  const xScale=Math.cos(2*Math.PI*fraction);
-  const axR=Math.max(0.5,Math.abs(xScale)*r);
-  let litPath;
-  if(fraction<0.015||fraction>0.985){litPath='';}
-  else if(Math.abs(fraction-0.5)<0.015){litPath=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${lit}"/>`;}
-  else if(!waning){
-    const tSweep=xScale>0?'0':'1';
-    litPath=`<path d="M ${cx} ${cy-r} A ${r} ${r} 0 0 1 ${cx} ${cy+r} A ${axR} ${r} 0 0 ${tSweep} ${cx} ${cy-r} Z" fill="${lit}"/>`;
-  } else {
-    const tSweep=xScale<0?'0':'1';
-    litPath=`<path d="M ${cx} ${cy-r} A ${r} ${r} 0 0 0 ${cx} ${cy+r} A ${axR} ${r} 0 0 ${tSweep} ${cx} ${cy-r} Z" fill="${lit}"/>`;
-  }
-  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="display:block;flex-shrink:0"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${dark}"/>${litPath}</svg>`;
-}
-
-function moonSVGLarge(fraction) {
-  const r=22,cx=24,cy=24,w=48,h=48;
-  const dark='#2a3f55',lit='#94a3b8';
-  const waning=fraction>0.5;
-  const xScale=Math.cos(2*Math.PI*fraction);
-  const axR=Math.max(0.5,Math.abs(xScale)*r);
-  let litPath;
-  if(fraction<0.015||fraction>0.985){litPath='';}
-  else if(Math.abs(fraction-0.5)<0.015){litPath=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${lit}"/>`;}
-  else if(!waning){
-    const tSweep=xScale>0?'0':'1';
-    litPath=`<path d="M ${cx} ${cy-r} A ${r} ${r} 0 0 1 ${cx} ${cy+r} A ${axR} ${r} 0 0 ${tSweep} ${cx} ${cy-r} Z" fill="${lit}"/>`;
-  } else {
-    const tSweep=xScale<0?'0':'1';
-    litPath=`<path d="M ${cx} ${cy-r} A ${r} ${r} 0 0 0 ${cx} ${cy+r} A ${axR} ${r} 0 0 ${tSweep} ${cx} ${cy-r} Z" fill="${lit}"/>`;
-  }
-  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${dark}"/>${litPath}</svg>`;
-}
-
-/* ══════════════════════════════════════════════
-   NOAA
-══════════════════════════════════════════════ */
-async function findStation(lat, lon) {
-  const r=await fetch('https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json?type=waterlevels&units=english');
-  if(!r.ok)throw new Error('Cannot reach NOAA station directory.');
-  const data=await r.json();
-  let best=null,bestD=Infinity;
-  for(const s of data.stations){const d=Math.hypot(s.lat-lat,s.lng-lon);if(d<bestD){bestD=d;best=s;}}
-  if(!best)throw new Error('No NOAA station found near your location.');
-  return best;
-}
-
-async function fetchRange(stationId, startDate, numDays) {
-  const begin=dateKey(startDate);
-  const end=dateKey(offsetDate(startDate,numDays-1));
-  const base=`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${begin}&end_date=${end}&station=${stationId}&product=predictions&datum=MLLW&time_zone=lst_ldt&units=english&application=tidetracker&format=json`;
-  const [hiloR,hrR]=await Promise.all([fetch(base+'&interval=hilo'),fetch(base+'&interval=h')]);
-  const [hiloJ,hrJ]=await Promise.all([hiloR.json(),hrR.json()]);
-  if(hiloJ.error||!hiloJ.predictions)throw new Error(hiloJ.error?.message||'No hi/lo data.');
-  if(hrJ.error||!hrJ.predictions)throw new Error('No hourly data.');
-  const hiloByDay={},hourlyByDay={};
-  for(const p of hiloJ.predictions){const k=p.t.slice(0,10).replace(/-/g,'');if(!hiloByDay[k])hiloByDay[k]=[];hiloByDay[k].push(p);}
-  for(const p of hrJ.predictions){const k=p.t.slice(0,10).replace(/-/g,'');if(!hourlyByDay[k])hourlyByDay[k]=[];hourlyByDay[k].push(p);}
-  return{hiloByDay,hourlyByDay};
-}
-
-/* ══════════════════════════════════════════════
-   SVG HELPER
-══════════════════════════════════════════════ */
-function svgEl(tag, attrs) {
-  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
-  for(const[k,v]of Object.entries(attrs))el.setAttribute(k,v);
-  return el;
-}
-
-/* ══════════════════════════════════════════════
-   MULTI-DAY CHART STATE
-══════════════════════════════════════════════ */
-let _dayCache  = {};   // key → {hilo, hourly, date, sun, moonRS, moon}
-let _days      = [];   // ordered array of day keys
-let _globalLo  = 0;
-let _globalHi  = 10;
-let _lat = 0, _lon = 0;
-let _panOffset = 0;    // current pan position in SVG units (0 = start of first day)
-let _totalW    = 0;    // total SVG width = numDays * DAY_W
-let _visibleW  = 0;    // visible SVG units (depends on container width)
-
-// Convert pan offset to a Date + minutes
-function panToDateTime() {
-  const totalMins = (_panOffset / DAY_W) * 1440;
-  const dayIndex  = Math.floor(totalMins / 1440);
-  const mins      = totalMins % 1440;
-  const key       = _days[Math.max(0, Math.min(_days.length-1, dayIndex))];
-  return { key, mins, dayIndex };
-}
-
-// Convert Date + mins to pan offset
-function dateTimeToPan(dayIndex, mins) {
-  return dayIndex * DAY_W + (mins / 1440) * DAY_W;
-}
-
-/* ══════════════════════════════════════════════
-   CATMULL-ROM SPLINE
-══════════════════════════════════════════════ */
-function catmullRom(pts) {
-  if(pts.length<2)return'';
-  let d=`M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
-  for(let i=0;i<pts.length-1;i++){
-    const p0=pts[Math.max(i-1,0)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(i+2,pts.length-1)];
-    const cp1x=p1[0]+(p2[0]-p0[0])/6,cp1y=p1[1]+(p2[1]-p0[1])/6;
-    const cp2x=p2[0]-(p3[0]-p1[0])/6,cp2y=p2[1]-(p3[1]-p1[1])/6;
-    d+=` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
-  }
-  return d;
-}
-
-/* ══════════════════════════════════════════════
-   BUILD CONTINUOUS MULTI-DAY SVGs
-══════════════════════════════════════════════ */
-function buildContinuousCharts() {
-  const numDays = _days.length;
-  _totalW = numDays * DAY_W;
-
-  const lo = _globalLo, hi = _globalHi;
-  const pad = (hi-lo)*0.18;
-  const vlo = lo-pad, vhi = hi+pad;
-  const vRange = vhi-vlo;
-
-  function toY(v) { return Y1-((v-vlo)/vRange)*CH; }
-
-  // ── Tide SVG ──
-  const tideSvg = $('tideSvg');
-  tideSvg.setAttribute('viewBox', `0 0 ${_totalW} ${CHART_H}`);
-  tideSvg.setAttribute('width', _totalW);
-
-  // Clear dynamic content
-  $('tideGrid').innerHTML = '';
-  $('tideYAxis').innerHTML = '';
-
-  // Y axis labels + horizontal grid lines (repeat each day)
-  for(let di=0;di<numDays;di++){
-    const x0 = di*DAY_W + 64;
-    for(let i=0;i<=5;i++){
-      const v=vlo+(vhi-vlo)*(i/5), y=toY(v);
-      if(di===0){
-        const t=svgEl('text',{x:x0-8,y:y+4,'text-anchor':'end',fill:'#7a9bbf','font-family':'DM Mono, monospace','font-size':11});
-        t.textContent=v.toFixed(1);
-        $('tideYAxis').appendChild(t);
-      }
-      $('tideGrid').appendChild(svgEl('line',{x1:x0,y1:y,x2:x0+936,y2:y,stroke:'#1a3050','stroke-width':0.7}));
-    }
-    // Vertical hour lines
-    for(let h=0;h<=24;h+=3){
-      const x=x0+(h/24)*936;
-      $('tideGrid').appendChild(svgEl('line',{x1:x,y1:Y0,x2:x,y2:Y1,stroke:'#1a3050','stroke-width':0.5}));
-    }
-    // Day boundary line
-    if(di>0){
-      $('tideGrid').appendChild(svgEl('line',{x1:di*DAY_W,y1:Y0,x2:di*DAY_W,y2:Y1,stroke:'#2a5080','stroke-width':1.5}));
+  // Trend: compare last 30 min
+  const ago30 = new Date(now - 30 * 60 * 1000);
+  const prev = readings.find(r => r.t >= ago30);
+  if (prev) {
+    const delta = closest.v - prev.v;
+    if (Math.abs(delta) < 0.05) {
+      trendValue.textContent = '─';
+      trendValue.style.color = 'var(--text-dim)';
+    } else if (delta > 0) {
+      trendValue.textContent = '▲ RISING';
+      trendValue.style.color = 'var(--glow)';
+    } else {
+      trendValue.textContent = '▼ FALLING';
+      trendValue.style.color = '#4ab8d4';
     }
   }
 
-  // Tide curve + fill across all days
-  let allPts = [];
-  _days.forEach((key,di)=>{
-    const cache = _dayCache[key];
-    if(!cache||!cache.hourly||!cache.hourly.length)return;
-    cache.hourly.forEach(p=>{
-      const dt=new Date(p.t.replace(' ','T'));
-      const mins=dt.getHours()*60+dt.getMinutes();
-      const x=di*DAY_W+64+(mins/1440)*936;
-      const y=toY(parseFloat(p.v));
-      allPts.push([x,y]);
-    });
-  });
-
-  if(allPts.length){
-    const path=catmullRom(allPts);
-    $('wCurve').setAttribute('d',path);
-    $('wFill').setAttribute('d',path+` L${allPts[allPts.length-1][0]},${Y1} L${allPts[0][0]},${Y1} Z`);
-    // Update clip path
-    $('tClip').querySelector('rect').setAttribute('width', _totalW);
-  }
-
-  // Hi/Lo markers
-  $('hlOnChart').innerHTML='';
-  _days.forEach((key,di)=>{
-    const cache=_dayCache[key];
-    if(!cache||!cache.hilo)return;
-    cache.hilo.forEach(pt=>{
-      const dt=new Date(pt.t.replace(' ','T'));
-      const mins=dt.getHours()*60+dt.getMinutes();
-      const x=di*DAY_W+64+(mins/1440)*936;
-      const y=toY(parseFloat(pt.v));
-      const isH=pt.type==='H';
-      const col=isH?'#60a5fa':'#94a3b8';
-      const ly=isH?y-36:y+46;
-      $('hlOnChart').appendChild(svgEl('line',{x1:x,y1:y,x2:x,y2:isH?ly+18:ly-18,stroke:col,'stroke-width':0.8,'stroke-dasharray':'3 2',opacity:0.5}));
-      $('hlOnChart').appendChild(svgEl('circle',{cx:x,cy:y,r:5,fill:col,stroke:'#0d1526','stroke-width':2}));
-      $('hlOnChart').appendChild(svgEl('rect',{x:x-36,y:ly-13,width:72,height:26,fill:'#060f1c',rx:3,opacity:0.93}));
-      const ht=svgEl('text',{x,y:ly,'text-anchor':'middle',fill:col,'font-family':'DM Mono, monospace','font-size':12,'font-weight':500});
-      ht.textContent=`${isH?'▲':'▼'} ${parseFloat(pt.v).toFixed(2)} ft`;
-      $('hlOnChart').appendChild(ht);
-      const tt=svgEl('text',{x,y:ly+12,'text-anchor':'middle',fill:'#7a9bbf','font-family':'DM Mono, monospace','font-size':10});
-      tt.textContent=fmt12(pt.t);
-      $('hlOnChart').appendChild(tt);
-    });
-  });
-
-  // Sun markers on chart
-  $('sunOnChart').innerHTML='';
-  _days.forEach((key,di)=>{
-    const cache=_dayCache[key];
-    if(!cache||!cache.sun)return;
-    const sun=cache.sun;
-    [{mins:sun.riseMins,isRise:true},{mins:sun.setMins,isRise:false}]
-      .filter(e=>e.mins!=null)
-      .forEach(ev=>{
-        const x=di*DAY_W+64+(ev.mins/1440)*936;
-        $('sunOnChart').appendChild(svgEl('line',{x1:x,y1:Y0,x2:x,y2:Y1,stroke:'#f59e0b','stroke-width':1,'stroke-dasharray':'4 3',opacity:0.65}));
-        const ly=Y0+30;
-        $('sunOnChart').appendChild(svgEl('rect',{x:x-34,y:ly-13,width:68,height:20,fill:'#0d1a2e',rx:3,opacity:0.92}));
-        const icon=svgEl('text',{x:x-20,y:ly+1,fill:'#f59e0b','font-size':13,'font-family':'serif'});
-        icon.textContent='☀';
-        $('sunOnChart').appendChild(icon);
-        const lbl=svgEl('text',{x:x-4,y:ly+1,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':11});
-        lbl.textContent=fmt12fromMins(ev.mins);
-        $('sunOnChart').appendChild(lbl);
-      });
-  });
-
-  // Border rect per day
-  const border=$('tideBorder');
-  if(border)border.setAttribute('width',_totalW-64);
-
-  // ── Moon track SVG ──
-  const moonSvg=$('moonTrack');
-  moonSvg.setAttribute('viewBox',`0 0 ${_totalW} ${TRACK_H}`);
-  moonSvg.setAttribute('width',_totalW);
-  moonSvg.innerHTML='';
-  _days.forEach((key,di)=>{
-    const cache=_dayCache[key];
-    if(!cache||!cache.moonRS)return;
-    const {riseMins,setMins}=cache.moonRS;
-    if(riseMins===null)return;
-    const W=DAY_W,x0=di*DAY_W;
-    const rx=x0+(riseMins/1440)*W, sx=x0+(setMins/1440)*W;
-    const band={y:4,height:TRACK_H-8,fill:'rgba(148,163,184,0.14)',rx:2};
-    if(rx<sx){moonSvg.appendChild(svgEl('rect',{x:rx,width:sx-rx,...band}));}
-    else{moonSvg.appendChild(svgEl('rect',{x:x0,width:sx-x0,...band}));moonSvg.appendChild(svgEl('rect',{x:rx,width:x0+W-rx,...band}));}
-    moonSvg.appendChild(svgEl('line',{x1:rx,y1:0,x2:rx,y2:TRACK_H,stroke:'#94a3b8','stroke-width':1.2}));
-    moonSvg.appendChild(svgEl('line',{x1:sx,y1:0,x2:sx,y2:TRACK_H,stroke:'#94a3b8','stroke-width':1.2}));
-    // Background
-    moonSvg.appendChild(svgEl('rect',{x:x0,y:0,width:W,height:TRACK_H,fill:'none',stroke:'#1e3a5f','stroke-width':0.5}));
-  });
-
-  // ── Sun track SVG ──
-  const sunSvg=$('sunTrack');
-  sunSvg.setAttribute('viewBox',`0 0 ${_totalW} ${TRACK_H}`);
-  sunSvg.setAttribute('width',_totalW);
-  sunSvg.innerHTML='';
-  _days.forEach((key,di)=>{
-    const cache=_dayCache[key];
-    if(!cache||!cache.sun)return;
-    const sun=cache.sun;
-    if(sun.riseMins===null)return;
-    const W=DAY_W,x0=di*DAY_W;
-    const rx=x0+(sun.riseMins/1440)*W, sx=x0+(sun.setMins/1440)*W;
-    sunSvg.appendChild(svgEl('rect',{x:rx,y:4,width:sx-rx,height:TRACK_H-8,fill:'rgba(245,158,11,0.2)',rx:2}));
-    sunSvg.appendChild(svgEl('line',{x1:rx,y1:0,x2:rx,y2:TRACK_H,stroke:'#f59e0b','stroke-width':1.2}));
-    sunSvg.appendChild(svgEl('line',{x1:sx,y1:0,x2:sx,y2:TRACK_H,stroke:'#f59e0b','stroke-width':1.2}));
-    sunSvg.appendChild(svgEl('rect',{x:x0,y:0,width:W,height:TRACK_H,fill:'none',stroke:'#1e3a5f','stroke-width':0.5}));
-  });
-
-  // ── Time axis SVG ──
-  const axisSvg=$('timeAxis');
-  axisSvg.setAttribute('viewBox',`0 0 ${_totalW} ${AXIS_H}`);
-  axisSvg.setAttribute('width',_totalW);
-  axisSvg.innerHTML='';
-  const timeLabels=['12a','3a','6a','9a','12p','3p','6p','9p','12a'];
-  _days.forEach((key,di)=>{
-    const x0=di*DAY_W;
-    // Day label
-    const cache=_dayCache[key];
-    if(cache&&cache.date){
-      const d=cache.date;
-      const dlbl=svgEl('text',{x:x0+DAY_W/2,y:AXIS_H-2,'text-anchor':'middle',fill:'#2a5080','font-family':'DM Mono, monospace','font-size':9,'letter-spacing':'0.06em'});
-      dlbl.textContent=`${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-      axisSvg.appendChild(dlbl);
+  // Find next high/low: local extremes after now
+  const future = readings.filter(r => r.t > now);
+  let nextExtreme = null, extremeType = '';
+  for (let i = 1; i < future.length - 1; i++) {
+    if (future[i].v > future[i-1].v && future[i].v > future[i+1].v) {
+      nextExtreme = future[i]; extremeType = 'HIGH'; break;
     }
-    timeLabels.forEach((lbl,i)=>{
-      const x=x0+(i/8)*DAY_W;
-      axisSvg.appendChild(svgEl('line',{x1:x,y1:0,x2:x,y2:4,stroke:'#2a5080','stroke-width':1}));
-      const t=svgEl('text',{x,y:14,'text-anchor':'middle',fill:'#7a9bbf','font-family':'DM Mono, monospace','font-size':10,'letter-spacing':'0.04em'});
-      t.textContent=lbl;
-      axisSvg.appendChild(t);
-    });
-  });
-}
-
-/* ══════════════════════════════════════════════
-   PAN / POINTER SYSTEM
-══════════════════════════════════════════════ */
-function getVisibleW() {
-  const scroll=$('chartScroll');
-  if(!scroll)return DAY_W;
-  return (scroll.offsetWidth/_totalW)*_totalW || DAY_W;
-}
-
-// Apply current pan offset — moves all SVGs together
-function applyPan() {
-  const svgs=['moonTrack','sunTrack','tideSvg','timeAxis'];
-  const clampedOffset=Math.max(0,Math.min(_totalW-_visibleW,_panOffset));
-  svgs.forEach(id=>{
-    const el=$(id);
-    if(el)el.style.transform=`translateX(${-clampedOffset}px)`;
-  });
-  updatePointerInfo();
-  updateDateChip();
-}
-
-// Get the absolute SVG X at the pointer (center of visible area)
-function pointerSvgX() {
-  return _panOffset+_visibleW/2;
-}
-
-// Convert absolute SVG X to day index + minutes
-function svgXToDateTime(svgX) {
-  const dayIndex=Math.floor(svgX/DAY_W);
-  const safeDay=Math.max(0,Math.min(_days.length-1,dayIndex));
-  const fracInDay=(svgX-safeDay*DAY_W)/DAY_W;
-  const mins=Math.max(0,Math.min(1439,fracInDay*1440));
-  return{dayIndex:safeDay,mins,key:_days[safeDay]};
-}
-
-// Interpolate tide height for a given day key + minutes
-function interpHeightForDay(key, mins) {
-  const cache=_dayCache[key];
-  if(!cache||!cache.hourly||!cache.hourly.length)return 0;
-  const hourly=cache.hourly;
-  for(let i=0;i<hourly.length-1;i++){
-    const t0=new Date(hourly[i].t.replace(' ','T'));
-    const t1=new Date(hourly[i+1].t.replace(' ','T'));
-    const m0=t0.getHours()*60+t0.getMinutes();
-    const m1=t1.getHours()*60+t1.getMinutes();
-    if(mins>=m0&&mins<=m1){
-      const frac=(mins-m0)/(m1-m0);
-      return parseFloat(hourly[i].v)+frac*(parseFloat(hourly[i+1].v)-parseFloat(hourly[i].v));
+    if (future[i].v < future[i-1].v && future[i].v < future[i+1].v) {
+      nextExtreme = future[i]; extremeType = 'LOW'; break;
     }
   }
-  return parseFloat(hourly[hourly.length-1].v);
-}
-
-// Determine if tide is rising or falling at given point
-function risingOrFalling(key, mins) {
-  const h1=interpHeightForDay(key,mins);
-  const h2=interpHeightForDay(key,Math.min(1439,mins+10));
-  return h2>h1?'↑':'↓';
-}
-
-function isAboveHorizon(mins,rise,set){
-  if(rise===null||set===null)return false;
-  return rise<set?mins>=rise&&mins<=set:mins>=rise||mins<=set;
-}
-
-// Update the info bar with current pointer position data
-function updatePointerInfo() {
-  const {key,mins}=svgXToDateTime(pointerSvgX());
-  const cache=_dayCache[key];
-  if(!cache)return;
-
-  const h=interpHeightForDay(key,mins);
-  const arrow=risingOrFalling(key,mins);
-
-  $('infoTime').textContent=fmt12fromMins(mins);
-  $('infoHeight').textContent=`${h.toFixed(2)} ft`;
-  $('infoArrow').textContent=arrow;
-  $('infoArrow').className='info-arrow '+(arrow==='↑'?'info-arrow--up':'info-arrow--down');
-
-  // Sun/moon status
-  if(cache.sun){
-    const sunUp=isAboveHorizon(mins,cache.sun.riseMins,cache.sun.setMins);
-    $('infoSun').textContent=sunUp?'☀ Above horizon':'☀ Below horizon';
-  }
-  if(cache.moonRS){
-    const moonUp=isAboveHorizon(mins,cache.moonRS.riseMins,cache.moonRS.setMins);
-    $('infoMoon').textContent=moonUp?'🌑 Moon above horizon':'🌑 Moon below horizon';
+  if (nextExtreme) {
+    nextLevel.textContent = nextExtreme.v.toFixed(2);
+    const hoursAway = ((nextExtreme.t - now) / 3600000).toFixed(1);
+    nextLabel.textContent = `${extremeType} IN ${hoursAway}h`;
+    nextLabel.style.color = extremeType === 'HIGH' ? 'var(--accent)' : 'var(--glow)';
   }
 }
 
-// Update date chip selection
-function updateDateChip() {
-  const {key}=svgXToDateTime(pointerSvgX());
-  document.querySelectorAll('.day-chip').forEach(c=>{
-    c.classList.toggle('day-chip--selected',c.dataset.key===key);
-  });
-}
+// ─── CANVAS CHART ─────────────────────────────────────────────────────────────
 
-/* ══════════════════════════════════════════════
-   POINTER LINE (fixed center vertical line)
-══════════════════════════════════════════════ */
-function renderPointerLine() {
-  // The pointer is a fixed CSS element centered over the chart scroll area
-  // It doesn't move — the chart moves under it
-  const ptr=$('pointerLine');
-  if(!ptr)return;
-  // Position it at center of chart scroll area
-  const scroll=$('chartScroll');
-  if(!scroll)return;
-  const centerX=scroll.offsetWidth/2;
-  ptr.style.left=centerX+'px';
-}
+function drawChart(readings) {
+  const isMobile = window.innerWidth < 768;
+  const pxPerHour = isMobile ? CFG.canvas.pxPerHour.mobile : CFG.canvas.pxPerHour.desktop;
+  const C = CFG.canvas;
+  const col = CFG.colors;
 
-/* ══════════════════════════════════════════════
-   DRAG / TOUCH PAN
-══════════════════════════════════════════════ */
-function initPan() {
-  const scrollWrap=document.querySelector('.chart-scroll-wrap');
-  const scroll=$('chartScroll');
-  if(!scrollWrap||!scroll)return;
+  // Time span of all data
+  const tMin = readings[0].t.getTime();
+  const tMax = readings[readings.length - 1].t.getTime();
+  const totalHours = (tMax - tMin) / 3600000;
 
-  _visibleW=scrollWrap.offsetWidth;
+  // Canvas size
+  const W = Math.ceil(C.paddingLeft + totalHours * pxPerHour + C.paddingRight);
+  const H = C.height;
+  canvas.width  = W;
+  canvas.height = H;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  chartInner.style.width  = W + 'px';
+  chartInner.style.height = H + 'px';
 
-  let dragging=false,startX=0,startPan=0;
+  const plotW = W - C.paddingLeft - C.paddingRight;
+  const plotH = H - C.paddingTop  - C.paddingBottom;
 
-  function onStart(clientX){
-    dragging=true;
-    startX=clientX;
-    startPan=_panOffset;
-    scrollWrap.style.cursor='grabbing';
+  // Value range
+  const vals = readings.map(r => r.v);
+  const vMin = Math.min(...vals);
+  const vMax = Math.max(...vals);
+  const vRange = vMax - vMin || 1;
+  const vPad = vRange * 0.15;
+  const yMin = vMin - vPad;
+  const yMax = vMax + vPad;
+
+  // Coordinate helpers
+  const xOf = t => C.paddingLeft + ((t - tMin) / 3600000) * pxPerHour;
+  const yOf = v => C.paddingTop  + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
+
+  // Clear
+  ctx.clearRect(0, 0, W, H);
+
+  // Background gradient
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#060e1a');
+  bg.addColorStop(1, '#030912');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Grid lines (horizontal, value-based) ──
+  const nYLines = 5;
+  ctx.strokeStyle = col.gridLine;
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= nYLines; i++) {
+    const v = yMin + (yMax - yMin) * (i / nYLines);
+    const y = yOf(v);
+    ctx.beginPath();
+    ctx.moveTo(C.paddingLeft, y);
+    ctx.lineTo(W - C.paddingRight, y);
+    ctx.stroke();
+
+    // y-axis label
+    ctx.fillStyle = col.axisText;
+    ctx.font = '10px "Space Mono", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(v.toFixed(1), C.paddingLeft - 8, y + 4);
   }
 
-  function onMove(clientX){
-    if(!dragging)return;
-    // Moving finger RIGHT means going back in time (pan left = decrease offset)
-    const dx=clientX-startX;
-    // SVG units per pixel
-    const svgPerPx=_totalW/scroll.offsetWidth;
-    _panOffset=Math.max(0,Math.min(_totalW-_visibleW,startPan-dx*svgPerPx));
-    applyPan();
-  }
+  // ── Vertical grid lines (hourly) ──
+  const firstHour = new Date(tMin);
+  firstHour.setMinutes(0, 0, 0);
+  firstHour.setTime(firstHour.getTime() + 3600000); // next full hour
 
-  function onEnd(){
-    dragging=false;
-    scrollWrap.style.cursor='';
-  }
+  ctx.strokeStyle = col.gridLine;
+  ctx.lineWidth = 1;
 
-  scrollWrap.addEventListener('mousedown',e=>{e.preventDefault();onStart(e.clientX);});
-  window.addEventListener('mousemove',e=>{if(dragging)onMove(e.clientX);});
-  window.addEventListener('mouseup',onEnd);
+  let prevDay = -1;
+  let t = firstHour.getTime();
+  while (t <= tMax) {
+    const x = xOf(t);
+    const d = new Date(t);
+    const h = d.getHours();
 
-  scrollWrap.addEventListener('touchstart',e=>{e.preventDefault();onStart(e.touches[0].clientX);},{passive:false});
-  scrollWrap.addEventListener('touchmove',e=>{e.preventDefault();onMove(e.touches[0].clientX);},{passive:false});
-  scrollWrap.addEventListener('touchend',onEnd);
+    // Brighter line at midnight
+    ctx.strokeStyle = h === 0 ? 'rgba(0,212,255,0.18)' : col.gridLine;
+    ctx.lineWidth = h === 0 ? 1.5 : 1;
+    ctx.beginPath();
+    ctx.moveTo(x, C.paddingTop);
+    ctx.lineTo(x, H - C.paddingBottom + 4);
+    ctx.stroke();
 
-  // Resize handler
-  window.addEventListener('resize',()=>{
-    _visibleW=scrollWrap.offsetWidth;
-    renderPointerLine();
-    applyPan();
-  });
-}
+    // x-axis time label — every 3 hours
+    if (h % 3 === 0) {
+      ctx.fillStyle = h === 0 ? col.axisTextBright : col.axisText;
+      ctx.font = h === 0 ? 'bold 10px "Space Mono", monospace' : '10px "Space Mono", monospace';
+      ctx.textAlign = 'center';
 
-/* ══════════════════════════════════════════════
-   DATE STRIP (chips)
-══════════════════════════════════════════════ */
-function buildDateStrip() {
-  const strip=$('dateStrip');
-  strip.innerHTML='';
-  const today=new Date();
-  const todayKey=dateKey(today);
-
-  _days.forEach(key=>{
-    const cache=_dayCache[key];
-    if(!cache)return;
-    const d=cache.date;
-    const isToday=key===todayKey;
-
-    const chip=document.createElement('div');
-    chip.className='day-chip'+(isToday?' day-chip--today':'');
-    chip.dataset.key=key;
-
-    const topRow=document.createElement('div');
-    topRow.className='chip-top-row';
-    const leftCol=document.createElement('div');
-    leftCol.className='chip-left';
-    const dayName=document.createElement('div');
-    dayName.className='chip-day';
-    dayName.textContent=isToday?'TODAY':DAYS[d.getDay()];
-    const dateNum=document.createElement('div');
-    dateNum.className='chip-date';
-    dateNum.textContent=`${d.getDate()} ${MONTHS[d.getMonth()]}`;
-    leftCol.appendChild(dayName);
-    leftCol.appendChild(dateNum);
-    const moonEl=document.createElement('div');
-    moonEl.className='chip-moon';
-    moonEl.id='cm-'+key;
-    topRow.appendChild(leftCol);
-    topRow.appendChild(moonEl);
-
-    const spark=document.createElement('canvas');
-    spark.className='chip-spark';
-    spark.width=80;spark.height=28;
-
-    const hiloWrap=document.createElement('div');
-    hiloWrap.className='chip-hilo';
-    hiloWrap.id='hilo-'+key;
-
-    const tidalWrap=document.createElement('div');
-    tidalWrap.className='chip-tidal';
-    tidalWrap.id='ct-'+key;
-
-    chip.appendChild(topRow);
-    chip.appendChild(spark);
-    chip.appendChild(hiloWrap);
-    chip.appendChild(tidalWrap);
-    strip.appendChild(chip);
-
-    // Click chip → pan to that day at noon
-    chip.addEventListener('click',()=>{
-      const di=_days.indexOf(key);
-      if(di<0)return;
-      _panOffset=Math.max(0,Math.min(_totalW-_visibleW,di*DAY_W+DAY_W*0.5-_visibleW/2));
-      applyPan();
-      updateStripScroll(key);
-    });
-  });
-
-  fillChipData();
-}
-
-function fillChipData() {
-  _days.forEach(key=>{
-    const cache=_dayCache[key];
-    if(!cache)return;
-
-    // Sparkline
-    const chip=document.querySelector(`.day-chip[data-key="${key}"]`);
-    if(!chip)return;
-    const canvas=chip.querySelector('.chip-spark');
-    if(canvas&&cache.hourly){
-      const ctx=canvas.getContext('2d');
-      const w=canvas.width,h=canvas.height;
-      ctx.clearRect(0,0,w,h);
-      const vals=cache.hourly.map(p=>parseFloat(p.v));
-      const lo=_globalLo,hi=_globalHi,range=hi-lo||1;
-      const px=i=>(i/(vals.length-1))*w;
-      const py=v=>h-((v-lo)/range)*(h-4)-2;
-      ctx.beginPath();
-      ctx.moveTo(px(0),py(vals[0]));
-      for(let i=1;i<vals.length;i++)ctx.lineTo(px(i),py(vals[i]));
-      ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();
-      ctx.fillStyle='rgba(59,130,246,0.18)';ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(px(0),py(vals[0]));
-      for(let i=1;i<vals.length;i++)ctx.lineTo(px(i),py(vals[i]));
-      ctx.strokeStyle='#3b82f6';ctx.lineWidth=1.5;ctx.stroke();
-    }
-
-    // Hi/lo
-    const hiloEl=$('hilo-'+key);
-    if(hiloEl&&cache.hilo){
-      const highs=cache.hilo.filter(p=>p.type==='H').map(p=>parseFloat(p.v));
-      const lows=cache.hilo.filter(p=>p.type==='L').map(p=>parseFloat(p.v));
-      if(highs.length){
-        const hi=Math.max(...highs),lo=Math.min(...lows);
-        hiloEl.innerHTML=`<span class="chip-hi">▲ ${hi.toFixed(1)}</span><span class="chip-lo">▼ ${lo.toFixed(1)}</span>`;
+      if (h === 0 && d.getDay() !== prevDay) {
+        ctx.fillText(fmtDayShort(d), x, H - C.paddingBottom + 18);
+        prevDay = d.getDay();
+      } else {
+        ctx.fillText(fmtHour(d), x, H - C.paddingBottom + 18);
       }
     }
 
-    // Moon emoji SVG
-    const moonEl=$('cm-'+key);
-    if(moonEl&&cache.moon){
-      moonEl.innerHTML=moonSVG(cache.moon.fraction);
-    }
+    t += 3600000;
+  }
 
-    // Tidal index
-    const tidalEl=$('ct-'+key);
-    if(tidalEl&&cache.date){
-      const t=calcTidalIndex(cache.date);
-      tidalEl.innerHTML=`<span class="chip-ti">${t.index}</span><span class="chip-tl">${t.label}</span>`;
-    }
+  // ── Tide fill ──
+  ctx.beginPath();
+  ctx.moveTo(xOf(readings[0].t.getTime()), yOf(readings[0].v));
+  for (const r of readings) {
+    ctx.lineTo(xOf(r.t.getTime()), yOf(r.v));
+  }
+  // Close path to bottom
+  ctx.lineTo(xOf(readings[readings.length - 1].t.getTime()), H - C.paddingBottom);
+  ctx.lineTo(xOf(readings[0].t.getTime()), H - C.paddingBottom);
+  ctx.closePath();
+
+  const fillGrad = ctx.createLinearGradient(0, C.paddingTop, 0, H - C.paddingBottom);
+  fillGrad.addColorStop(0,   'rgba(0,212,255,0.28)');
+  fillGrad.addColorStop(0.5, 'rgba(0,150,200,0.12)');
+  fillGrad.addColorStop(1,   'rgba(0,80,120,0.04)');
+  ctx.fillStyle = fillGrad;
+  ctx.fill();
+
+  // ── Tide line with glow ──
+  // Outer glow
+  ctx.beginPath();
+  ctx.moveTo(xOf(readings[0].t.getTime()), yOf(readings[0].v));
+  for (const r of readings) ctx.lineTo(xOf(r.t.getTime()), yOf(r.v));
+  ctx.strokeStyle = 'rgba(0,212,255,0.2)';
+  ctx.lineWidth = 6;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Inner bright line
+  ctx.beginPath();
+  ctx.moveTo(xOf(readings[0].t.getTime()), yOf(readings[0].v));
+  for (const r of readings) ctx.lineTo(xOf(r.t.getTime()), yOf(r.v));
+  ctx.strokeStyle = col.tideLine;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // ── High / Low markers ──
+  for (let i = 1; i < readings.length - 1; i++) {
+    const prev = readings[i - 1].v;
+    const curr = readings[i].v;
+    const next = readings[i + 1].v;
+    const isHigh = curr > prev && curr > next;
+    const isLow  = curr < prev && curr < next;
+    if (!isHigh && !isLow) continue;
+
+    const x = xOf(readings[i].t.getTime());
+    const y = yOf(curr);
+
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = isHigh ? col.highMark : col.lowMark;
+    ctx.fill();
+    ctx.strokeStyle = isHigh ? col.accent : col.glow;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = isHigh ? col.accent : col.glow;
+    ctx.font = '9px "Space Mono", monospace';
+    ctx.textAlign = 'center';
+    const label = (isHigh ? 'H ' : 'L ') + curr.toFixed(1);
+    ctx.fillText(label, x, isHigh ? y - 12 : y + 20);
+  }
+
+  // ── Y-axis label ──
+  ctx.save();
+  ctx.translate(14, C.paddingTop + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = col.axisText;
+  ctx.font = '9px "Space Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('WATER LEVEL (ft, MLLW)', 0, 0);
+  ctx.restore();
+
+  // ── NOW line via DOM ──
+  const nowX = xOf(Date.now());
+  nowLine.style.left = nowX + 'px';
+  nowLine.style.top  = C.paddingTop + 'px';
+  nowLine.style.height = (H - C.paddingTop) + 'px';
+
+  // ── Scroll to "now - window" ──
+  const windowHours = isMobile ? CFG.windowHours.mobile : CFG.windowHours.desktop;
+  const scrollTarget = nowX - C.paddingLeft - windowHours * pxPerHour;
+  scrollWrapper.scrollLeft = Math.max(0, scrollTarget);
+}
+
+// ─── DRAG TO SCROLL ───────────────────────────────────────────────────────────
+
+function enableDragScroll(el) {
+  let isDown = false, startX, scrollLeft;
+  el.addEventListener('mousedown', e => {
+    isDown = true; el.classList.add('dragging');
+    startX = e.pageX - el.offsetLeft;
+    scrollLeft = el.scrollLeft;
+  });
+  el.addEventListener('mouseleave', () => { isDown = false; el.classList.remove('dragging'); });
+  el.addEventListener('mouseup',    () => { isDown = false; el.classList.remove('dragging'); });
+  el.addEventListener('mousemove',  e => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - el.offsetLeft;
+    el.scrollLeft = scrollLeft - (x - startX);
   });
 }
 
-function updateStripScroll(key) {
-  const el=document.querySelector(`.day-chip[data-key="${key}"]`);
-  if(el)el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
-}
+// ─── MAIN FLOW ────────────────────────────────────────────────────────────────
 
-/* ══════════════════════════════════════════════
-   STATS PANEL
-══════════════════════════════════════════════ */
-function renderStats(key) {
-  const cache=_dayCache[key];
-  if(!cache)return;
-  const today=new Date();
-  const isToday=key===dateKey(today);
-  const nowMins=isToday?(today.getHours()*60+today.getMinutes()):0;
+async function run() {
+  retryBtn.style.display = 'none';
+  statusOverlay.classList.remove('hidden');
+  hero.style.display = 'none';
+  chartSection.style.display = 'none';
 
-  if(isToday){
-    $('sCurrent').textContent=interpHeightForDay(key,nowMins).toFixed(2);
-    $('currentCard').style.display='';
-  } else {
-    $('currentCard').style.display='none';
-  }
+  try {
+    // 1. Geolocate
+    setStatus('Requesting location…');
+    const pos = await geolocate();
+    state.lat = pos.coords.latitude;
+    state.lon = pos.coords.longitude;
 
-  const now=new Date();
-  const future=isToday?
-    (cache.hilo||[]).filter(p=>new Date(p.t.replace(' ','T'))>now):
-    (cache.hilo||[]);
+    // 2. Fetch stations
+    setStatus('Finding nearest tide station…');
+    const stations = await fetchStations();
+    const { station, distKm } = findNearest(stations, state.lat, state.lon);
+    state.station = station;
 
-  if(future.length>=1){
-    const n=future[0];
-    $('sNextLbl').textContent=n.type==='H'?(isToday?'NEXT HIGH':'FIRST HIGH'):(isToday?'NEXT LOW':'FIRST LOW');
-    $('sNextVal').textContent=parseFloat(n.v).toFixed(2);
-    $('sNextTime').textContent=fmt12(n.t);
-    $('nextCard').style.borderTop=n.type==='H'?'2px solid #3b82f6':'2px solid #94a3b8';
-  }
-  if(future.length>=2){
-    const a=future[1];
-    $('sAfterLbl').textContent=a.type==='H'?'FOLLOWING HIGH':'FOLLOWING LOW';
-    $('sAfterVal').textContent=parseFloat(a.v).toFixed(2);
-    $('sAfterTime').textContent=fmt12(a.t);
-  }
+    stationName.textContent = station.name;
+    stationDist.textContent = distKm < 10
+      ? distKm.toFixed(1) + ' km'
+      : Math.round(distKm) + ' km';
 
-  const hs=(cache.hilo||[]).map(p=>parseFloat(p.v));
-  if(hs.length)$('sRange').textContent=(Math.max(...hs)-Math.min(...hs)).toFixed(2);
+    // 3. Fetch tide data
+    setStatus(`Loading tide data for ${station.name}…`);
+    const readings = await fetchTideData(station.id);
+    if (readings.length < 2) throw new Error('Insufficient tide data returned');
+    state.readings = readings;
 
-  if(cache.moon){
-    const bsvg=$('moonBigSvg');
-    if(bsvg)bsvg.innerHTML=moonSVGLarge(cache.moon.fraction);
-    $('sMoonName').textContent=cache.moon.name.toUpperCase();
-    $('sMoonIllum').textContent=`${Math.round(cache.moon.illumination)}% illuminated`;
-  }
+    // 4. Render
+    statusOverlay.classList.add('hidden');
+    hero.style.display = '';
+    chartSection.style.display = '';
 
-  const tidal=calcTidalIndex(cache.date);
-  $('sTidalIndex').textContent=tidal.index;
-  $('sTidalLabel').textContent=tidal.label;
-  $('sTidalLabel').className='sc-unit tidal-label '+tidal.cls;
-  $('sTidalAlign').textContent=tidal.alignPct+'%';
-  $('sTidalDist').textContent=Math.round(tidal.distKm/1000)+'k km';
-  const bar=$('tidalIndexBar');
-  if(bar)bar.style.width=tidal.index+'%';
+    updateHero(readings);
+    drawChart(readings);
+    enableDragScroll(scrollWrapper);
 
-  $('statsRow').style.display='grid';
-}
+    // 5. Live updates every 6 minutes
+    setInterval(async () => {
+      try {
+        const fresh = await fetchTideData(state.station.id);
+        if (fresh.length > 1) {
+          state.readings = fresh;
+          updateHero(fresh);
+          drawChart(fresh);
+        }
+      } catch (_) { /* silent */ }
+    }, 6 * 60 * 1000);
 
-/* ══════════════════════════════════════════════
-   NOW TICKER
-══════════════════════════════════════════════ */
-function startNowTicker() {
-  function tick() {
-    const todayKey=dateKey(new Date());
-    const {key}=svgXToDateTime(pointerSvgX());
-    if(key===todayKey){
-      const now=new Date();
-      const nowMins=now.getHours()*60+now.getMinutes();
-      const h=interpHeightForDay(todayKey,nowMins);
-      $('sCurrent').textContent=h.toFixed(2);
+    // Redraw on resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => drawChart(state.readings), 200);
+    });
+
+  } catch (err) {
+    console.error(err);
+    if (err.code === 1) {
+      showError('Location access denied. Please allow location and try again.');
+    } else {
+      showError('Error: ' + (err.message || 'Unknown error'));
     }
-    updatePointerInfo();
   }
-  tick();
-  setInterval(tick,60000);
 }
 
-/* ══════════════════════════════════════════════
-   MAIN
-══════════════════════════════════════════════ */
-async function init() {
-  startClock();
-
-  if(!navigator.geolocation){
-    setMsg('GEOLOCATION NOT SUPPORTED');return;
-  }
-
-  let lat,lon;
-  try{
-    const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:14000}));
-    lat=pos.coords.latitude;lon=pos.coords.longitude;
-  }catch{
-    setMsg('LOCATION ACCESS DENIED — PLEASE ENABLE AND RELOAD');
-    $('pulseDot').classList.add('dim');return;
-  }
-  _lat=lat;_lon=lon;
-
-  // Station
-  setMsg('LOCATING NEAREST TIDE STATION');
-  let station;
-  try{station=await findStation(lat,lon);}
-  catch(e){setMsg(e.message.toUpperCase());return;}
-
-  $('stationName').textContent=station.name;
-  $('stationId').textContent=`${station.id} · ${station.state||''}`;
-  $('footerStn').textContent=`STATION ${station.id} — ${station.name}`;
-
-  // Fetch 60 days
-  const today=new Date();
-  const START_OFFSET=-2,NUM_DAYS=60;
-  const startDate=offsetDate(today,START_OFFSET);
-
-  setMsg('LOADING 60-DAY TIDE DATA…');
-  let hiloByDay,hourlyByDay;
-  try{
-    const r=await fetchRange(station.id,startDate,NUM_DAYS);
-    hiloByDay=r.hiloByDay;hourlyByDay=r.hourlyByDay;
-  }catch(e){setMsg(e.message.toUpperCase());return;}
-
-  // Build cache with astronomy per day
-  let glo=Infinity,ghi=-Infinity;
-  for(let i=0;i<NUM_DAYS;i++){
-    const d=offsetDate(startDate,i);
-    const key=dateKey(d);
-    const hilo=hiloByDay[key]||[];
-    const hourly=hourlyByDay[key]||[];
-    if(hourly.length){
-      const vals=hourly.map(p=>parseFloat(p.v));
-      glo=Math.min(glo,...vals);ghi=Math.max(ghi,...vals);
-    }
-    let sun,moonRS,moon;
-    try{sun=calcSun(lat,lon,d);}catch{sun={riseMins:null,setMins:null};}
-    try{moonRS=calcMoonRiseSet(lat,lon,d);}catch{moonRS={riseMins:null,setMins:null};}
-    try{moon=calcMoonPhase(d);}catch{moon=null;}
-    _dayCache[key]={hilo,hourly,date:d,sun,moonRS,moon};
-    _days.push(key);
-  }
-  _globalLo=glo;_globalHi=ghi;
-  _totalW=NUM_DAYS*DAY_W;
-
-  // Meta strip
-  const latDir=lat>=0?'N':'S',lonDir=lon>=0?'E':'W';
-  $('metaCoords').textContent=`${Math.abs(lat).toFixed(3)}° ${latDir}  ${Math.abs(lon).toFixed(3)}° ${lonDir}`;
-  $('metaStrip').style.opacity='1';
-  $('pulseDot').classList.remove('dim');
-
-  // Show UI
-  $('loadingWrap').style.display='none';
-  $('chartPanel').style.display='flex';
-  $('chartPanel').style.flexDirection='column';
-  $('dateStripWrap').style.display='block';
-
-  // Build continuous charts
-  buildContinuousCharts();
-
-  // Initial pan — center on NOW
-  const nowMins=today.getHours()*60+today.getMinutes();
-  const todayIndex=_days.indexOf(dateKey(today));
-  if(todayIndex>=0){
-    const scrollWrapEl=document.querySelector('.chart-scroll-wrap');
-    _visibleW=scrollWrapEl?scrollWrapEl.offsetWidth:DAY_W;
-    const svgPerPx=_totalW/(_visibleW||1);
-    const nowSvgX=todayIndex*DAY_W+(nowMins/1440)*DAY_W;
-    _panOffset=Math.max(0,Math.min(_totalW-_visibleW,nowSvgX-_visibleW/2));
-  }
-
-  // Init pan interaction
-  initPan();
-  renderPointerLine();
-  applyPan();
-
-  // Date strip
-  buildDateStrip();
-  updateDateChip();
-
-  // Stats for today
-  renderStats(dateKey(today));
-
-  // Now ticker
-  startNowTicker();
-}
-
-init();
+retryBtn.addEventListener('click', run);
+run();
