@@ -243,41 +243,71 @@ body {
 }
 @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
 
-/* ── TRACKS ── */
-.track-row {
-  display: grid;
-  grid-template-columns: 64px 1fr;
-  align-items: center;
-  margin-bottom: 4px;
+/* ── CHART LAYOUT ── */
+.chart-layout {
+  display: flex;
+  align-items: stretch;
 }
-.track-row--axis { margin-bottom: 0; }
 
-.track-lbl {
+/* Fixed label column — never scrolls */
+.chart-labels {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 58px;
+}
+
+.chart-label-cell {
   font-family: var(--font-mono);
-  font-size: 0.63rem;
-  letter-spacing: 0.16em;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
   color: var(--text-mid);
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding-right: 8px;
   justify-content: flex-end;
+  gap: 4px;
+  padding-right: 7px;
+  flex-shrink: 0;
 }
-.track-lbl svg { width: 12px; height: 12px; flex-shrink: 0; }
+.chart-label-cell svg { flex-shrink: 0; }
+.chart-label-spacer { flex: 1; }
 
-.track-body { width: 100%; }
+/* Scrollable SVG column */
+.chart-scroll {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #1e3a5f transparent;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.chart-scroll::-webkit-scrollbar { height: 4px; }
+.chart-scroll::-webkit-scrollbar-track { background: transparent; }
+.chart-scroll::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 2px; }
 
+/* All SVGs inside scroll: fluid on desktop, min-width on mobile */
 .track-svg {
   display: block;
   width: 100%;
+  min-width: 700px;
   height: 26px;
-  overflow: visible;
 }
 .axis-svg { height: 22px; }
 
 /* ── TIDE SVG ── */
-.tide-wrap { width: 100%; position: relative; }
-.tide-svg  { display: block; width: 100%; height: auto; }
+.tide-svg {
+  display: block;
+  width: 100%;
+  min-width: 700px;
+  height: auto;
+}
+
+/* Backwards compat for old .track-row references in JS */
+.track-row { display: contents; }
+.track-body { display: contents; }
 
 .w-fill  { fill: url(#wGrad); }
 .w-curve {

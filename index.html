@@ -3,8 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TIDELINE</title>
+  <title>TIDE TRACKER</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- iOS home screen icon -->
+  <link rel="apple-touch-icon" href="icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TIDE TRACKER" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
@@ -20,7 +25,7 @@
         <circle cx="15" cy="14.5" r="2.2" fill="#3b82f6"/>
       </svg>
       <div class="brand-text">
-        <div class="brand-name">TIDELINE</div>
+        <div class="brand-name">TIDE TRACKER</div>
         <div class="brand-sub">COASTAL CONDITIONS</div>
       </div>
     </div>
@@ -59,53 +64,52 @@
   <!-- CHART PANEL -->
   <div class="chart-panel" id="chartPanel" style="display:none">
 
-    <div class="track-row">
-      <div class="track-lbl">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        MOON
+    <div class="chart-layout">
+      <!-- Fixed label column -->
+      <div class="chart-labels">
+        <div class="chart-label-cell" style="height:30px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          MOON
+        </div>
+        <div class="chart-label-cell" style="height:30px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          SUN
+        </div>
+        <div class="chart-label-cell chart-label-spacer"></div>
+        <div class="chart-label-cell" style="height:22px"></div>
       </div>
-      <div class="track-body"><svg id="moonTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none"></svg></div>
-    </div>
 
-    <div class="track-row">
-      <div class="track-lbl">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        SUN
+      <!-- Scrollable SVG column -->
+      <div class="chart-scroll" id="chartScroll">
+        <svg id="moonTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none" style="height:30px"></svg>
+        <svg id="sunTrack"  class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none" style="height:30px"></svg>
+        <svg class="tide-svg" id="tideSvg" viewBox="0 0 1000 310" preserveAspectRatio="none" aria-label="Tide predictions">
+          <defs>
+            <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#3b82f6" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/>
+            </linearGradient>
+            <clipPath id="tClip"><rect x="64" y="0" width="926" height="278"/></clipPath>
+          </defs>
+          <g id="tideGrid"></g>
+          <g id="tideYAxis"></g>
+          <path id="wFill"  clip-path="url(#tClip)" class="w-fill"/>
+          <path id="wCurve" clip-path="url(#tClip)" class="w-curve"/>
+          <g id="sunOnChart"></g>
+          <g id="hlOnChart"></g>
+          <g id="nowG" style="display:none">
+            <line id="nowL" y1="14" y2="278" class="now-line"/>
+            <circle id="nowC" r="4.5" class="now-dot"/>
+            <rect id="nowBg" class="now-bg" rx="2"/>
+            <text id="nowTime" class="now-time" text-anchor="middle"></text>
+            <text id="nowHt" class="now-ht" text-anchor="middle"></text>
+          </g>
+          <line id="scrubLine" y1="14" y2="284" class="scrub-line" style="display:none"/>
+          <circle id="scrubDot" r="5.5" class="scrub-dot" style="display:none"/>
+          <rect x="64" y="14" width="926" height="264" fill="none" stroke="#1e3a5f" stroke-width="0.8"/>
+        </svg>
+        <svg id="timeAxis" class="track-svg axis-svg" viewBox="0 0 1000 22" preserveAspectRatio="none" style="height:22px"></svg>
       </div>
-      <div class="track-body"><svg id="sunTrack" class="track-svg" viewBox="0 0 1000 26" preserveAspectRatio="none"></svg></div>
-    </div>
-
-    <div class="tide-wrap">
-      <svg class="tide-svg" id="tideSvg" viewBox="0 0 1000 310" preserveAspectRatio="xMidYMid meet" aria-label="Tide predictions">
-        <defs>
-          <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#3b82f6" stop-opacity="0.25"/>
-            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/>
-          </linearGradient>
-          <clipPath id="tClip"><rect x="64" y="0" width="926" height="278"/></clipPath>
-        </defs>
-        <g id="tideGrid"></g>
-        <g id="tideYAxis"></g>
-        <path id="wFill"  clip-path="url(#tClip)" class="w-fill"/>
-        <path id="wCurve" clip-path="url(#tClip)" class="w-curve"/>
-        <g id="sunOnChart"></g>
-        <g id="hlOnChart"></g>
-        <g id="nowG" style="display:none">
-          <line id="nowL" y1="14" y2="278" class="now-line"/>
-          <circle id="nowC" r="4.5" class="now-dot"/>
-          <rect id="nowBg" class="now-bg" rx="2"/>
-          <text id="nowTime" class="now-time" text-anchor="middle"></text>
-          <text id="nowHt" class="now-ht" text-anchor="middle"></text>
-        </g>
-        <line id="scrubLine" y1="14" y2="284" class="scrub-line" style="display:none"/>
-        <circle id="scrubDot" r="5.5" class="scrub-dot" style="display:none"/>
-        <rect x="64" y="14" width="926" height="264" fill="none" stroke="#1e3a5f" stroke-width="0.8"/>
-      </svg>
-    </div>
-
-    <div class="track-row track-row--axis">
-      <div class="track-lbl" aria-hidden="true"></div>
-      <div class="track-body"><svg id="timeAxis" class="track-svg axis-svg" viewBox="0 0 1000 22" preserveAspectRatio="none"></svg></div>
     </div>
 
     <!-- DATE STRIP -->
