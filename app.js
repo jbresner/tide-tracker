@@ -56,7 +56,7 @@ function startClock() {
     const n = new Date();
     const day = DAYS[n.getDay()][0] + DAYS[n.getDay()].slice(1).toLowerCase();
     const mon = MONTHS[n.getMonth()][0] + MONTHS[n.getMonth()].slice(1).toLowerCase();
-    $('headerDate').textContent = `${day} · ${mon} ${n.getDate()} · ${n.getFullYear()}`;
+    $('headerDate').textContent = `${day}, ${mon} ${n.getDate()}, ${n.getFullYear()}`;
   }
   tick(); setInterval(tick, 60000);
 }
@@ -588,7 +588,7 @@ function updatePointerInfo() {
   $('infoDatetime').textContent=`${dayName}, ${monName} ${d.getDate()}`;
   $('infoTime').textContent=fmt12fromMins(mins);
   $('infoTideVal').textContent=`Tide Level: ${arrow==='↑'?'▲':'▼'} ${h.toFixed(2)} ft`;
-  $('infoTideVal').className='info-tideval '+(arrow==='↑'?'info-arrow--up':'info-arrow--down');
+  $('infoTideVal').className='info-datetime info-tide-fixed';
 }
 
 // Update date chip selection
