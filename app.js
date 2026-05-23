@@ -335,19 +335,19 @@ function buildContinuousCharts() {
 
   // Y axis labels + horizontal grid lines (repeat each day)
   for(let di=0;di<numDays;di++){
-    const x0 = di*DAY_W + 64;
+    const x0 = di*DAY_W;
     for(let i=0;i<=5;i++){
       const v=vlo+(vhi-vlo)*(i/5), y=toY(v);
       if(di===0){
-        const t=svgEl('text',{x:x0-8,y:y+4,'text-anchor':'end',fill:'#7a9bbf','font-family':'DM Mono, monospace','font-size':11});
+        const t=svgEl('text',{x:x0+6,y:y-4,'text-anchor':'start',fill:'#7a9bbf','font-family':'DM Mono, monospace','font-size':11});
         t.textContent=v.toFixed(1);
         $('tideYAxis').appendChild(t);
       }
-      $('tideGrid').appendChild(svgEl('line',{x1:x0,y1:y,x2:x0+936,y2:y,stroke:'#1a3050','stroke-width':0.7}));
+      $('tideGrid').appendChild(svgEl('line',{x1:x0,y1:y,x2:x0+DAY_W,y2:y,stroke:'#1a3050','stroke-width':0.7}));
     }
     // Vertical hour lines
     for(let h=0;h<=24;h+=3){
-      const x=x0+(h/24)*936;
+      const x=x0+(h/24)*DAY_W;
       $('tideGrid').appendChild(svgEl('line',{x1:x,y1:Y0,x2:x,y2:Y1,stroke:'#1a3050','stroke-width':0.5}));
     }
     // Day boundary line
@@ -364,7 +364,7 @@ function buildContinuousCharts() {
     cache.hourly.forEach(p=>{
       const dt=new Date(p.t.replace(' ','T'));
       const mins=dt.getHours()*60+dt.getMinutes();
-      const x=di*DAY_W+64+(mins/1440)*936;
+      const x=di*DAY_W+(mins/1440)*DAY_W;
       const y=toY(parseFloat(p.v));
       allPts.push([x,y]);
     });
@@ -386,7 +386,7 @@ function buildContinuousCharts() {
     cache.hilo.forEach(pt=>{
       const dt=new Date(pt.t.replace(' ','T'));
       const mins=dt.getHours()*60+dt.getMinutes();
-      const x=di*DAY_W+64+(mins/1440)*936;
+      const x=di*DAY_W+(mins/1440)*DAY_W;
       const y=toY(parseFloat(pt.v));
       const isH=pt.type==='H';
       const col=isH?'#60a5fa':'#94a3b8';
@@ -412,14 +412,18 @@ function buildContinuousCharts() {
     [{mins:sun.riseMins,isRise:true},{mins:sun.setMins,isRise:false}]
       .filter(e=>e.mins!=null)
       .forEach(ev=>{
-        const x=di*DAY_W+64+(ev.mins/1440)*936;
+        const x=di*DAY_W+(ev.mins/1440)*DAY_W;
         $('sunOnChart').appendChild(svgEl('line',{x1:x,y1:Y0,x2:x,y2:Y1,stroke:'#f59e0b','stroke-width':1,'stroke-dasharray':'4 3',opacity:0.65}));
         const ly=Y0+30;
         $('sunOnChart').appendChild(svgEl('rect',{x:x-34,y:ly-13,width:68,height:20,fill:'#0d1a2e',rx:3,opacity:0.92}));
-        const icon=svgEl('text',{x:x-20,y:ly+1,fill:'#f59e0b','font-size':13,'font-family':'serif'});
-        icon.textContent='☀';
-        $('sunOnChart').appendChild(icon);
-        const lbl=svgEl('text',{x:x-4,y:ly+1,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':11});
+        // SVG sun icon (matches track label)
+        const sunG=svgEl('g',{transform:`translate(${x-28},${ly-7})`});
+        const sc=svgEl('circle',{cx:6,cy:6,r:2.5,fill:'none',stroke:'#f59e0b','stroke-width':1.2});
+        const rays=[[6,0,6,2],[6,10,6,12],[0,6,2,6],[10,6,12,6],[1.5,1.5,3,3],[9,9,10.5,10.5],[9,3,10.5,1.5],[1.5,10.5,3,9]];
+        rays.forEach(([x1,y1,x2,y2])=>sunG.appendChild(svgEl('line',{x1,y1,x2,y2,stroke:'#f59e0b','stroke-width':1.2,'stroke-linecap':'round'})));
+        sunG.appendChild(sc);
+        $('sunOnChart').appendChild(sunG);
+        const lbl=svgEl('text',{x:x+2,y:ly+1,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':11});
         lbl.textContent=fmt12fromMins(ev.mins);
         $('sunOnChart').appendChild(lbl);
       });
@@ -427,7 +431,7 @@ function buildContinuousCharts() {
 
   // Border rect per day
   const border=$('tideBorder');
-  if(border)border.setAttribute('width',_totalW-64);
+  if(border){border.setAttribute('x',0);border.setAttribute('width',_totalW);}
 
   // ── Moon track SVG ──
   const moonSvg=$('moonTrack');
@@ -583,7 +587,7 @@ function updatePointerInfo() {
 
   $('infoDatetime').textContent=`${dayName}, ${monName} ${d.getDate()}`;
   $('infoTime').textContent=fmt12fromMins(mins);
-  $('infoTideVal').textContent=`Tide Level: ${arrow} ${h.toFixed(2)} ft`;
+  $('infoTideVal').textContent=`Tide Level: ${arrow==='↑'?'▲':'▼'} ${h.toFixed(2)} ft`;
   $('infoTideVal').className='info-tideval '+(arrow==='↑'?'info-arrow--up':'info-arrow--down');
 }
 

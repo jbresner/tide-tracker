@@ -315,8 +315,9 @@ body {
 .info-sep {
   width: 1px;
   height: 18px;
-  background: var(--navy-light);
+  background: var(--text-sec);
   flex-shrink: 0;
+  opacity: 0.4;
 }
 .info-tideval {
   font-family: var(--font-body);
