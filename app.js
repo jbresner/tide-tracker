@@ -54,7 +54,9 @@ function setMsg(msg) { $('loaderMsg').textContent = msg; }
 function startClock() {
   function tick() {
     const n = new Date();
-    $('headerDate').textContent = `${DAYS[n.getDay()]} ${String(n.getDate()).padStart(2,'0')} ${MONTHS[n.getMonth()]} ${n.getFullYear()}`;
+    const day = DAYS[n.getDay()][0] + DAYS[n.getDay()].slice(1).toLowerCase();
+    const mon = MONTHS[n.getMonth()][0] + MONTHS[n.getMonth()].slice(1).toLowerCase();
+    $('headerDate').textContent = `${day} · ${mon} ${n.getDate()} · ${n.getFullYear()}`;
   }
   tick(); setInterval(tick, 60000);
 }
@@ -574,9 +576,10 @@ function updatePointerInfo() {
   const h=interpHeightForDay(key,mins);
   const arrow=risingOrFalling(key,mins);
   const d=cache.date;
+  const dayName=DAYS[d.getDay()][0]+DAYS[d.getDay()].slice(1).toLowerCase();
+  const monName=MONTHS[d.getMonth()][0]+MONTHS[d.getMonth()].slice(1).toLowerCase();
 
-  $('infoDate').textContent=`${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-  $('infoTime').textContent=fmt12fromMins(mins);
+  $('infoDatetime').textContent=`${dayName} · ${monName} ${d.getDate()} · ${fmt12fromMins(mins)}`;
   $('infoHeight').textContent=`${h.toFixed(2)} ft`;
   $('infoArrow').textContent=arrow;
   $('infoArrow').className='info-arrow '+(arrow==='↑'?'info-arrow--up':'info-arrow--down');
@@ -718,10 +721,12 @@ function buildDateStrip() {
     leftCol.className='chip-left';
     const dayName=document.createElement('div');
     dayName.className='chip-day';
-    dayName.textContent=isToday?'TODAY':DAYS[d.getDay()];
+    const dayStr=DAYS[d.getDay()];
+    dayName.textContent=isToday?'Today':dayStr[0]+dayStr.slice(1).toLowerCase();
     const dateNum=document.createElement('div');
     dateNum.className='chip-date';
-    dateNum.textContent=`${d.getDate()} ${MONTHS[d.getMonth()]}`;
+    const monStr=MONTHS[d.getMonth()];
+    dateNum.textContent=`${d.getDate()} ${monStr[0]+monStr.slice(1).toLowerCase()}`;
     leftCol.appendChild(dayName);
     leftCol.appendChild(dateNum);
     const moonEl=document.createElement('div');

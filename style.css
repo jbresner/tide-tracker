@@ -284,13 +284,12 @@ body {
   background: #080d19;
   border-top: 1px solid var(--border);
 }
-.info-date {
-  font-family: var(--font-ui);
-  font-size: 1.1rem;
-  font-weight: 700;
+.info-datetime {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
   color: var(--text-sec);
-  letter-spacing: 0.06em;
-  min-width: 110px;
+  letter-spacing: 0.02em;
 }
 .info-time {
   font-family: var(--font-ui);
