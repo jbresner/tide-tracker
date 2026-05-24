@@ -30,20 +30,34 @@
       </div>
     </div>
     <div class="header-meta">
-      <span class="ver">v2.4.11</span>
+      <span class="ver">v2.5</span>
     </div>
   </header>
 
   <!-- META STRIP -->
   <div class="meta-strip" id="metaStrip">
-    <div class="meta-item">
-      <span class="pulse-dot" id="pulseDot"></span>
-      <span class="meta-val meta-station-name" id="stationName">Acquiring…</span>
+    <div class="meta-left">
+      <div class="meta-block">
+        <div class="meta-block-label">Location</div>
+        <div class="meta-block-value">
+          <span class="pulse-dot" id="pulseDot"></span>
+          <span id="stationName">Acquiring…</span>
+        </div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-block-label">NOAA Station</div>
+        <div class="meta-block-value" id="stationId">—</div>
+      </div>
     </div>
-    <div class="meta-sep"></div>
-    <div class="meta-item">
-      <span class="meta-lbl">STATION</span>
-      <span class="meta-val" id="stationId">—</span>
+    <div class="meta-right">
+      <div class="meta-block">
+        <div class="meta-block-label">Date &amp; Time</div>
+        <div class="meta-block-value" id="infoDatetime">—</div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-block-label">Tide Level</div>
+        <div class="meta-block-value" id="infoTideNum">—</div>
+      </div>
     </div>
   </div>
 
@@ -98,18 +112,6 @@
         </div>
       </div>
 
-    </div>
-
-    <!-- INFO BAR — persistent, always visible, updates on scrub -->
-    <div class="info-bar" id="infoBar">
-      <div class="info-block">
-        <div class="info-block-label">Date &amp; Time</div>
-        <div class="info-block-value" id="infoDatetime">—</div>
-      </div>
-      <div class="info-block info-block--tide">
-        <div class="info-block-label">Tide Level</div>
-        <div class="info-block-value" id="infoTideNum">—</div>
-      </div>
     </div>
 
     <!-- DATE STRIP -->

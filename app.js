@@ -585,10 +585,6 @@ function updatePointerInfo() {
 
   $('infoDatetime').textContent=`${dayName}, ${monName} ${d.getDate()} · ${fmt12fromMins(mins)}`;
   $('infoTideNum').textContent=`${rising?'▲':'▼'} ${h.toFixed(2)} ft`;
-
-  const bar=$('infoBar');
-  bar.classList.toggle('info-bar--rising', rising);
-  bar.classList.toggle('info-bar--ebbing', !rising);
 }
 
 // Update date chip selection
