@@ -471,6 +471,14 @@ function buildContinuousCharts() {
     sunSvg.appendChild(svgEl('line',{x1:rx,y1:0,x2:rx,y2:TRACK_H,stroke:'#f59e0b','stroke-width':1.2}));
     sunSvg.appendChild(svgEl('line',{x1:sx,y1:0,x2:sx,y2:TRACK_H,stroke:'#f59e0b','stroke-width':1.2}));
     sunSvg.appendChild(svgEl('rect',{x:x0,y:0,width:W,height:TRACK_H,fill:'none',stroke:'#1e3a5f','stroke-width':0.5}));
+    // Sunrise label
+    const rLbl=svgEl('text',{x:rx+5,y:TRACK_H-5,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':9,'font-weight':500});
+    rLbl.textContent=`▲ ${fmt12fromMins(sun.riseMins)}`;
+    sunSvg.appendChild(rLbl);
+    // Sunset label
+    const sLbl=svgEl('text',{x:sx+5,y:TRACK_H-5,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':9,'font-weight':500});
+    sLbl.textContent=`▼ ${fmt12fromMins(sun.setMins)}`;
+    sunSvg.appendChild(sLbl);
   });
 
   // ── Time axis SVG ──
@@ -572,7 +580,7 @@ function isAboveHorizon(mins,rise,set){
   return rise<set?mins>=rise&&mins<=set:mins>=rise||mins<=set;
 }
 
-// Update the info bar with current pointer position data
+// Update the meta strip right side with current pointer position data
 function updatePointerInfo() {
   const {key,mins}=svgXToDateTime(pointerSvgX());
   const cache=_dayCache[key];
@@ -589,10 +597,6 @@ function updatePointerInfo() {
 
   $('infoDatetime').textContent=`${dayName}, ${monName} ${d.getDate()} · ${fmt12fromMins(mins)}`;
   $('infoTideNum').textContent=`${rising?'▲':'▼'} ${h.toFixed(2)} ft`;
-
-  const bar=$('infoBar');
-  bar.classList.toggle('info-bar--rising', rising);
-  bar.classList.toggle('info-bar--ebbing', !rising);
 }
 
 // Update date chip selection
@@ -747,15 +751,11 @@ function buildDateStrip() {
 
     const spark=document.createElement('canvas');
     spark.className='chip-spark';
-    spark.width=80;spark.height=28;
+    spark.width=80;spark.height=22;
 
     const hiloWrap=document.createElement('div');
     hiloWrap.className='chip-hilo';
     hiloWrap.id='hilo-'+key;
-
-    const tidalWrap=document.createElement('div');
-    tidalWrap.className='chip-tidal';
-    tidalWrap.id='ct-'+key;
 
     chip.appendChild(topRow);
     chip.appendChild(spark);
@@ -821,13 +821,7 @@ function fillChipData() {
       moonEl.innerHTML=moonSVG(cache.moon.fraction);
     }
 
-    // Tidal index
-    const tidalEl=$('ct-'+key);
-    if(tidalEl&&cache.date){
-      const t=calcTidalIndex(cache.date);
-      const displayLabel=t.label==='Spring'||t.label==='Neap'?t.label:'';
-      tidalEl.innerHTML=displayLabel?`<span class="chip-tl">${displayLabel}</span>`:'';
-    }
+    // (tidal index kept in calcTidalIndex for future use, not displayed)
   });
 }
 
