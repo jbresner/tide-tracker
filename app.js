@@ -987,7 +987,8 @@ async function init() {
 
   // Meta strip
   const latDir=lat>=0?'N':'S',lonDir=lon>=0?'E':'W';
-  $('metaCoords').textContent=`${Math.abs(lat).toFixed(3)}° ${latDir}  ${Math.abs(lon).toFixed(3)}° ${lonDir}`;
+  const coordsEl=$('metaCoords');
+  if(coordsEl)coordsEl.textContent=`${Math.abs(lat).toFixed(3)}° ${latDir}  ${Math.abs(lon).toFixed(3)}° ${lonDir}`;
   $('metaStrip').style.opacity='1';
   $('pulseDot').classList.remove('dim');
 
