@@ -323,26 +323,30 @@ body {
 
 /* ── POINTER INFO STRIP ── */
 .pointer-info-strip {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 2rem;
-  padding: 0.4rem 1.5rem;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0.4rem 0;
+  padding-left: 50%;
   background: #080d19;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  overflow: hidden;
 }
 .pointer-info-block {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  gap: 1rem;
+  align-items: baseline;
 }
 .pointer-info-label {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.16em;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
   color: var(--text-mid);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 .pointer-info-value {
   font-family: var(--font-ui);
