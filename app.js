@@ -490,7 +490,6 @@ function buildContinuousCharts() {
   const timeLabels=['12a','3a','6a','9a','12p','3p','6p','9p','12a'];
   _days.forEach((key,di)=>{
     const x0=di*DAY_W;
-    // Day label
     const cache=_dayCache[key];
     if(cache&&cache.date){
       const d=cache.date;
