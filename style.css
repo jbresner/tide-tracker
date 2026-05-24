@@ -113,7 +113,7 @@ body {
 }
 .meta-right {
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
   align-items: center;
   flex-shrink: 0;
 }
