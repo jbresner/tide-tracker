@@ -397,13 +397,11 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
+  justify-content: flex-start;
   margin-top: 2px;
   width: 100%;
 }
-.chip-ti { font-family: var(--font-mono); font-size: 0.62rem; font-weight: 600; color: #a0b4cc; line-height: 1; }
-.chip-tl { font-family: var(--font-mono); font-size: 0.58rem; color: #a0b4cc; line-height: 1; }
+.chip-tl { font-family: var(--font-mono); font-size: 0.62rem; font-weight: 600; color: #a0b4cc; line-height: 1; }
 
 /* ── STATS ── */
 .stats-row {

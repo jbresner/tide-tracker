@@ -824,7 +824,8 @@ function fillChipData() {
     const tidalEl=$('ct-'+key);
     if(tidalEl&&cache.date){
       const t=calcTidalIndex(cache.date);
-      tidalEl.innerHTML=`<span class="chip-ti">${t.index}</span><span class="chip-tl">${t.label}</span>`;
+      const displayLabel=t.label==='Spring'||t.label==='Neap'?t.label:'';
+      tidalEl.innerHTML=displayLabel?`<span class="chip-tl">${displayLabel}</span>`:'';
     }
   });
 }
