@@ -283,14 +283,14 @@ body {
   padding: 0 1.5rem;
   height: 38px;
   background: #080d19;
-  border-top: 1px solid var(--border);
+  border-top: 2px solid var(--pointer);
   overflow: hidden;
 }
 .info-datetime-group {
   display: flex;
   align-items: center;
   gap: 0;
-  width: 280px;
+  width: 180px;
   flex-shrink: 0;
 }
 .info-datetime {
