@@ -404,29 +404,17 @@ function buildContinuousCharts() {
     });
   });
 
-  // Sun markers on chart
+  // Sun rise/set lines on chart (no labels — times shown in sun track above)
   $('sunOnChart').innerHTML='';
   _days.forEach((key,di)=>{
     const cache=_dayCache[key];
     if(!cache||!cache.sun)return;
     const sun=cache.sun;
-    [{mins:sun.riseMins,isRise:true},{mins:sun.setMins,isRise:false}]
+    [{mins:sun.riseMins},{mins:sun.setMins}]
       .filter(e=>e.mins!=null)
       .forEach(ev=>{
         const x=di*DAY_W+(ev.mins/1440)*DAY_W;
-        $('sunOnChart').appendChild(svgEl('line',{x1:x,y1:Y0,x2:x,y2:Y1,stroke:'#f59e0b','stroke-width':1,'stroke-dasharray':'4 3',opacity:0.65}));
-        const ly=Y0+30;
-        $('sunOnChart').appendChild(svgEl('rect',{x:x-34,y:ly-13,width:68,height:20,fill:'#0d1a2e',rx:3,opacity:0.92}));
-        // SVG sun icon (matches track label)
-        const sunG=svgEl('g',{transform:`translate(${x-28},${ly-7})`});
-        const sc=svgEl('circle',{cx:6,cy:6,r:2.5,fill:'none',stroke:'#f59e0b','stroke-width':1.2});
-        const rays=[[6,0,6,2],[6,10,6,12],[0,6,2,6],[10,6,12,6],[1.5,1.5,3,3],[9,9,10.5,10.5],[9,3,10.5,1.5],[1.5,10.5,3,9]];
-        rays.forEach(([x1,y1,x2,y2])=>sunG.appendChild(svgEl('line',{x1,y1,x2,y2,stroke:'#f59e0b','stroke-width':1.2,'stroke-linecap':'round'})));
-        sunG.appendChild(sc);
-        $('sunOnChart').appendChild(sunG);
-        const lbl=svgEl('text',{x:x+2,y:ly+1,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':11});
-        lbl.textContent=fmt12fromMins(ev.mins);
-        $('sunOnChart').appendChild(lbl);
+        $('sunOnChart').appendChild(svgEl('line',{x1:x,y1:Y0,x2:x,y2:Y1,stroke:'#f59e0b','stroke-width':1,'stroke-dasharray':'4 3',opacity:0.5}));
       });
   });
 
@@ -471,12 +459,12 @@ function buildContinuousCharts() {
     sunSvg.appendChild(svgEl('line',{x1:rx,y1:0,x2:rx,y2:TRACK_H,stroke:'#f59e0b','stroke-width':1.2}));
     sunSvg.appendChild(svgEl('line',{x1:sx,y1:0,x2:sx,y2:TRACK_H,stroke:'#f59e0b','stroke-width':1.2}));
     sunSvg.appendChild(svgEl('rect',{x:x0,y:0,width:W,height:TRACK_H,fill:'none',stroke:'#1e3a5f','stroke-width':0.5}));
-    // Sunrise label
-    const rLbl=svgEl('text',{x:rx+5,y:TRACK_H-5,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':9,'font-weight':500});
+    // Sunrise label — vertically centered
+    const rLbl=svgEl('text',{x:rx+5,y:TRACK_H/2,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':9,'font-weight':500,'dominant-baseline':'middle'});
     rLbl.textContent=`▲ ${fmt12fromMins(sun.riseMins)}`;
     sunSvg.appendChild(rLbl);
-    // Sunset label
-    const sLbl=svgEl('text',{x:sx+5,y:TRACK_H-5,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':9,'font-weight':500});
+    // Sunset label — vertically centered
+    const sLbl=svgEl('text',{x:sx+5,y:TRACK_H/2,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':9,'font-weight':500,'dominant-baseline':'middle'});
     sLbl.textContent=`▼ ${fmt12fromMins(sun.setMins)}`;
     sunSvg.appendChild(sLbl);
   });

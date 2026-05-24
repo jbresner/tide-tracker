@@ -110,7 +110,7 @@ body {
   display: flex;
   gap: 2rem;
   align-items: center;
-  text-align: right;
+  text-align: left;
 }
 .meta-block {
   display: flex;
