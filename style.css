@@ -92,49 +92,41 @@ body {
 /* ── META STRIP ── */
 .meta-strip {
   display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  padding: 0.5rem 1.5rem;
+  align-items: center;
+  padding: 0.6rem 1.5rem;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
+  flex-wrap: nowrap;
+  overflow: hidden;
   opacity: 0;
   transition: opacity 0.4s ease;
-  gap: 1rem;
 }
-.meta-left {
+.meta-item {
   display: flex;
-  gap: 2rem;
   align-items: center;
+  gap: 0.45rem;
+  padding: 0 1.2rem;
 }
-.meta-right {
-  display: flex;
-  gap: 2rem;
-  align-items: center;
-  text-align: left;
+.meta-item:first-child { padding-left: 0; }
+.meta-sep { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
+.meta-station-name {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-pri);
 }
-.meta-block {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-}
-.meta-block-label {
+.meta-lbl {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   letter-spacing: 0.16em;
   color: var(--text-mid);
-  text-transform: uppercase;
 }
-.meta-block-value {
-  font-family: var(--font-ui);
-  font-size: 0.92rem;
-  font-weight: 600;
+.meta-val {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
   color: var(--text-pri);
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  letter-spacing: 0.05em;
 }
 .pulse-dot {
   width: 8px; height: 8px;
@@ -149,19 +141,6 @@ body {
   0%  { box-shadow: 0 0 0 0 rgba(59,130,246,0.6); }
   70% { box-shadow: 0 0 0 9px rgba(59,130,246,0); }
   100%{ box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-}
-
-@media (max-width: 600px) {
-  .meta-strip {
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.6rem 1rem;
-  }
-  .meta-right {
-    text-align: left;
-    border-top: 1px solid var(--border);
-    padding-top: 0.5rem;
-  }
 }
 
 /* ── LOADING ── */
@@ -297,6 +276,52 @@ body {
 }
 
 /* ── INFO BAR ── */
+.info-bar {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  gap: 0;
+  padding: 0 1.5rem;
+  background: rgba(59,130,246,0.07);
+  border-top: 1px solid var(--border);
+  transition: background 2.5s ease;
+  overflow: hidden;
+}
+.info-bar--rising { background: rgba(59,130,246,0.07); }
+.info-bar--ebbing { background: rgba(100,116,139,0.07); }
+.info-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.55rem 0;
+  flex-shrink: 0;
+}
+.info-block--tide {
+  margin-left: 2.5rem;
+}
+.info-block-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  color: var(--text-sec);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+.info-block-value {
+  font-family: var(--font-ui);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-pri);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.info-detail {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-sec);
+  letter-spacing: 0.03em;
+}
+
 /* ── DATE STRIP ── */
 .date-strip-wrap {
   background: var(--bg-panel);
@@ -370,6 +395,15 @@ body {
 }
 .chip-hi { color: #a0b4cc; }
 .chip-lo { color: #a0b4cc; }
+.chip-tidal {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 2px;
+  width: 100%;
+}
+.chip-tl { font-family: var(--font-mono); font-size: 0.62rem; font-weight: 600; color: #a0b4cc; line-height: 1; }
 
 /* ── STATS ── */
 .stats-row {
@@ -424,7 +458,10 @@ body {
 /* ── RESPONSIVE ── */
 @media (max-width: 720px) {
   .header { grid-template-columns: 1fr auto; gap: 1rem; padding: 0.85rem 1rem; }
-  .chart-layout { padding-left: 0; }
+  .meta-strip { padding: 0.5rem 1rem; }
+  .meta-item { padding: 0 0.6rem; }
+  .chart-layout { padding-left: 0.75rem; }
+  .info-bar { padding-left: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
   .stats-row { grid-template-columns: 1fr 1fr 1fr; }
   .stat-card--moon { grid-column: span 1; }
   .sc-val { font-size: 1.5rem; }

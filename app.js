@@ -404,7 +404,7 @@ function buildContinuousCharts() {
     });
   });
 
-  // Sun rise/set lines on chart (no labels — times shown in sun track above)
+  // Sun rise/set lines on chart — times shown in sun track above, no labels here
   $('sunOnChart').innerHTML='';
   _days.forEach((key,di)=>{
     const cache=_dayCache[key];
@@ -568,7 +568,7 @@ function isAboveHorizon(mins,rise,set){
   return rise<set?mins>=rise&&mins<=set:mins>=rise||mins<=set;
 }
 
-// Update the meta strip right side with current pointer position data
+// Update the info bar with current pointer position data
 function updatePointerInfo() {
   const {key,mins}=svgXToDateTime(pointerSvgX());
   const cache=_dayCache[key];
@@ -585,6 +585,10 @@ function updatePointerInfo() {
 
   $('infoDatetime').textContent=`${dayName}, ${monName} ${d.getDate()} · ${fmt12fromMins(mins)}`;
   $('infoTideNum').textContent=`${rising?'▲':'▼'} ${h.toFixed(2)} ft`;
+
+  const bar=$('infoBar');
+  bar.classList.toggle('info-bar--rising', rising);
+  bar.classList.toggle('info-bar--ebbing', !rising);
 }
 
 // Update date chip selection
@@ -739,11 +743,15 @@ function buildDateStrip() {
 
     const spark=document.createElement('canvas');
     spark.className='chip-spark';
-    spark.width=80;spark.height=22;
+    spark.width=80;spark.height=28;
 
     const hiloWrap=document.createElement('div');
     hiloWrap.className='chip-hilo';
     hiloWrap.id='hilo-'+key;
+
+    const tidalWrap=document.createElement('div');
+    tidalWrap.className='chip-tidal';
+    tidalWrap.id='ct-'+key;
 
     chip.appendChild(topRow);
     chip.appendChild(spark);
@@ -809,7 +817,7 @@ function fillChipData() {
       moonEl.innerHTML=moonSVG(cache.moon.fraction);
     }
 
-    // (tidal index kept in calcTidalIndex for future use, not displayed)
+    // Tidal index — label not displayed (math kept for future use)
   });
 }
 
