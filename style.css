@@ -281,11 +281,14 @@ body {
   align-items: center;
   gap: 0;
   padding: 0 1.5rem;
-  height: 38px;
-  background: rgba(245,158,11,0.06);
+  height: 44px;
+  background: rgba(59,130,246,0.07);
   border-top: 1px solid var(--border);
   overflow: hidden;
+  transition: background 2.5s ease;
 }
+.info-bar--rising  { background: rgba(59,130,246,0.07); }
+.info-bar--ebbing  { background: rgba(100,116,139,0.07); }
 .info-datetime-group {
   display: flex;
   align-items: center;
@@ -295,17 +298,35 @@ body {
 }
 .info-datetime {
   font-family: var(--font-body);
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text-pri);
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--text-mid);
   letter-spacing: 0.02em;
-  line-height: 38px;
+  line-height: 44px;
   white-space: nowrap;
 }
 .info-time-val {
   margin-left: 0.6rem;
 }
 .info-tide-fixed {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.info-tide-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.info-tide-value {
+  font-family: var(--font-ui);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-pri);
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 .info-detail {

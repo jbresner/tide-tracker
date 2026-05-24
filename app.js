@@ -579,6 +579,7 @@ function updatePointerInfo() {
 
   const h=interpHeightForDay(key,mins);
   const arrow=risingOrFalling(key,mins);
+  const rising=arrow==='↑';
   const d=cache.date;
   const dayStr=DAYS[d.getDay()];
   const monStr=MONTHS[d.getMonth()];
@@ -587,8 +588,12 @@ function updatePointerInfo() {
 
   $('infoDatetime').textContent=`${dayName}, ${monName} ${d.getDate()}`;
   $('infoTime').textContent=fmt12fromMins(mins);
-  $('infoTideVal').textContent=`Tide Level: ${arrow==='↑'?'▲':'▼'} ${h.toFixed(2)} ft`;
-  $('infoTideVal').className='info-datetime info-tide-fixed';
+  $('infoTideNum').textContent=`${rising?'▲':'▼'} ${h.toFixed(2)} ft`;
+
+  // Background tint transition
+  const bar=$('infoBar');
+  bar.classList.toggle('info-bar--rising', rising);
+  bar.classList.toggle('info-bar--ebbing', !rising);
 }
 
 // Update date chip selection
