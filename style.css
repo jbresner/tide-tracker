@@ -326,7 +326,7 @@ body {
 .pointer-info-strip {
   position: absolute;
   left: calc(50% + 10px);
-  bottom: 12px;
+  bottom: 14px;
   z-index: 11;
   display: flex;
   flex-direction: row;

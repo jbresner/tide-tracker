@@ -459,12 +459,12 @@ function buildContinuousCharts() {
     sunSvg.appendChild(svgEl('line',{x1:rx,y1:0,x2:rx,y2:TRACK_H,stroke:'#f59e0b','stroke-width':1.2}));
     sunSvg.appendChild(svgEl('line',{x1:sx,y1:0,x2:sx,y2:TRACK_H,stroke:'#f59e0b','stroke-width':1.2}));
     sunSvg.appendChild(svgEl('rect',{x:x0,y:0,width:W,height:TRACK_H,fill:'none',stroke:'#1e3a5f','stroke-width':0.5}));
-    // Sunrise label — vertically centered
+    // Sunrise label — vertically centered, to the right of rise line
     const rLbl=svgEl('text',{x:rx+5,y:TRACK_H/2,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':9,'font-weight':500,'dominant-baseline':'middle'});
     rLbl.textContent=`▲ ${fmt12fromMins(sun.riseMins)}`;
     sunSvg.appendChild(rLbl);
-    // Sunset label — vertically centered
-    const sLbl=svgEl('text',{x:sx+5,y:TRACK_H/2,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':9,'font-weight':500,'dominant-baseline':'middle'});
+    // Sunset label — vertically centered, to the LEFT of set line so it stays inside
+    const sLbl=svgEl('text',{x:sx-5,y:TRACK_H/2,fill:'#fcd34d','font-family':'DM Mono, monospace','font-size':9,'font-weight':500,'dominant-baseline':'middle','text-anchor':'end'});
     sLbl.textContent=`▼ ${fmt12fromMins(sun.setMins)}`;
     sunSvg.appendChild(sLbl);
   });
