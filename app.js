@@ -586,11 +586,9 @@ function updatePointerInfo() {
   const dayName=dayStr[0]+dayStr.slice(1).toLowerCase();
   const monName=monStr[0]+monStr.slice(1).toLowerCase();
 
-  $('infoDatetime').textContent=`${dayName}, ${monName} ${d.getDate()}`;
-  $('infoTime').textContent=fmt12fromMins(mins);
+  $('infoDatetime').textContent=`${dayName}, ${monName} ${d.getDate()} · ${fmt12fromMins(mins)}`;
   $('infoTideNum').textContent=`${rising?'▲':'▼'} ${h.toFixed(2)} ft`;
 
-  // Background tint transition
   const bar=$('infoBar');
   bar.classList.toggle('info-bar--rising', rising);
   bar.classList.toggle('info-bar--ebbing', !rising);
