@@ -282,8 +282,8 @@ body {
   gap: 0;
   padding: 0 1.5rem;
   height: 38px;
-  background: #080d19;
-  border-top: 2px solid var(--pointer);
+  background: rgba(245,158,11,0.06);
+  border-top: 1px solid var(--border);
   overflow: hidden;
 }
 .info-datetime-group {
@@ -297,7 +297,7 @@ body {
   font-family: var(--font-body);
   font-size: 0.95rem;
   font-weight: 500;
-  color: var(--text-sec);
+  color: var(--text-pri);
   letter-spacing: 0.02em;
   line-height: 38px;
   white-space: nowrap;
