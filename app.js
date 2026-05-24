@@ -56,7 +56,8 @@ function startClock() {
     const n = new Date();
     const day = DAYS[n.getDay()][0] + DAYS[n.getDay()].slice(1).toLowerCase();
     const mon = MONTHS[n.getMonth()][0] + MONTHS[n.getMonth()].slice(1).toLowerCase();
-    $('headerDate').textContent = `${day}, ${mon} ${n.getDate()}, ${n.getFullYear()}`;
+    const el=$('headerDate');
+    if(el) el.textContent = `${day}, ${mon} ${n.getDate()}, ${n.getFullYear()}`;
   }
   tick(); setInterval(tick, 60000);
 }
