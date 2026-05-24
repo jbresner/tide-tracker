@@ -391,9 +391,14 @@ function buildContinuousCharts() {
       const y=toY(parseFloat(pt.v));
       const isH=pt.type==='H';
       const col=isH?'#60a5fa':'#94a3b8';
-      const ly=isH?y-36:y+46;
-      $('hlOnChart').appendChild(svgEl('line',{x1:x,y1:y,x2:x,y2:isH?ly+18:ly-18,stroke:col,'stroke-width':0.8,'stroke-dasharray':'3 2',opacity:0.5}));
-      $('hlOnChart').appendChild(svgEl('circle',{cx:x,cy:y,r:5,fill:col,stroke:'#0d1526','stroke-width':2}));
+      const yDot=Math.max(Y0+5,Math.min(Y1-5,y));
+      const lyRaw=isH?yDot-36:yDot+46;
+      const ly=isH?Math.max(lyRaw,Y0+26):Math.min(lyRaw,Y1-26);
+      const lineY2=isH?ly+18:ly-18;
+      if(Math.abs(yDot-lineY2)>4){
+        $('hlOnChart').appendChild(svgEl('line',{x1:x,y1:yDot,x2:x,y2:lineY2,stroke:col,'stroke-width':0.8,'stroke-dasharray':'3 2',opacity:0.5}));
+      }
+      $('hlOnChart').appendChild(svgEl('circle',{cx:x,cy:yDot,r:5,fill:col,stroke:'#0d1526','stroke-width':2}));
       $('hlOnChart').appendChild(svgEl('rect',{x:x-36,y:ly-13,width:72,height:26,fill:'#060f1c',rx:3,opacity:0.93}));
       const ht=svgEl('text',{x,y:ly,'text-anchor':'middle',fill:col,'font-family':'DM Mono, monospace','font-size':12,'font-weight':500});
       ht.textContent=`${isH?'▲':'▼'} ${parseFloat(pt.v).toFixed(2)} ft`;
@@ -439,6 +444,14 @@ function buildContinuousCharts() {
     else{moonSvg.appendChild(svgEl('rect',{x:x0,width:sx-x0,...band}));moonSvg.appendChild(svgEl('rect',{x:rx,width:x0+W-rx,...band}));}
     moonSvg.appendChild(svgEl('line',{x1:rx,y1:0,x2:rx,y2:TRACK_H,stroke:'#94a3b8','stroke-width':1.2}));
     moonSvg.appendChild(svgEl('line',{x1:sx,y1:0,x2:sx,y2:TRACK_H,stroke:'#94a3b8','stroke-width':1.2}));
+    // Moonrise label — to the right of rise line
+    const rLbl=svgEl('text',{x:rx+5,y:TRACK_H/2,fill:'#cbd5e1','font-family':'DM Mono, monospace','font-size':9,'font-weight':500,'dominant-baseline':'middle'});
+    rLbl.textContent=`▲ ${fmt12fromMins(riseMins)}`;
+    moonSvg.appendChild(rLbl);
+    // Moonset label — to the left of set line
+    const sLbl=svgEl('text',{x:sx-5,y:TRACK_H/2,fill:'#cbd5e1','font-family':'DM Mono, monospace','font-size':9,'font-weight':500,'dominant-baseline':'middle','text-anchor':'end'});
+    sLbl.textContent=`▼ ${fmt12fromMins(setMins)}`;
+    moonSvg.appendChild(sLbl);
     // Background
     moonSvg.appendChild(svgEl('rect',{x:x0,y:0,width:W,height:TRACK_H,fill:'none',stroke:'#1e3a5f','stroke-width':0.5}));
   });
@@ -731,7 +744,7 @@ function buildDateStrip() {
     const dateNum=document.createElement('div');
     dateNum.className='chip-date';
     const monStr=MONTHS[d.getMonth()];
-    dateNum.textContent=`${d.getDate()} ${monStr[0]+monStr.slice(1).toLowerCase()}`;
+    dateNum.textContent=`${monStr[0]+monStr.slice(1).toLowerCase()} ${d.getDate()}`;
     leftCol.appendChild(dayName);
     leftCol.appendChild(dateNum);
     const moonEl=document.createElement('div');
