@@ -325,13 +325,18 @@ body {
 /* ── POINTER INFO STRIP ── */
 .pointer-info-strip {
   position: absolute;
-  left: calc(50% + 10px);
-  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 11px;
   z-index: 11;
   display: flex;
   flex-direction: row;
   gap: 2rem;
   pointer-events: none;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 14px;
 }
 .pointer-info-block {
   display: flex;
