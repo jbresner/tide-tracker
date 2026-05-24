@@ -93,39 +93,40 @@ body {
 .meta-strip {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 2rem;
-  padding: 0 1.5rem;
-  min-height: 44px;
+  padding: 0.6rem 1.5rem;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
+  flex-wrap: nowrap;
+  overflow: hidden;
   opacity: 0;
   transition: opacity 0.4s ease;
 }
-.meta-left {
+.meta-item {
   display: flex;
   align-items: center;
-  gap: 2rem;
-  flex-shrink: 0;
+  gap: 0.45rem;
+  padding: 0 1.2rem;
 }
-.meta-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-shrink: 0;
-  margin-left: auto;
+.meta-item:first-child { padding-left: 0; }
+.meta-sep { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
+.meta-station-name {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-pri);
 }
-.meta-block {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding: 6px 0;
+.meta-lbl {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  color: var(--text-mid);
 }
-.meta-block--datetime {
-  min-width: 160px;
-}
-.meta-block--tide {
-  min-width: 100px;
+.meta-val {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-pri);
+  letter-spacing: 0.05em;
 }
 .meta-block-label {
   font-family: var(--font-mono);
@@ -318,6 +319,38 @@ body {
   stroke-linejoin: round;
   stroke-linecap: round;
   filter: drop-shadow(0 0 5px rgba(59,130,246,0.45));
+}
+
+/* ── POINTER INFO STRIP ── */
+.pointer-info-strip {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.4rem 1.5rem;
+  background: #080d19;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.pointer-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.pointer-info-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  color: var(--text-mid);
+  text-transform: uppercase;
+}
+.pointer-info-value {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-pri);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 /* ── DATE STRIP ── */

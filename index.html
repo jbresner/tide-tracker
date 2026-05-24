@@ -30,34 +30,25 @@
       </div>
     </div>
     <div class="header-meta">
-      <span class="ver">v2.5.6</span>
+      <span class="ver">v2.5.7</span>
     </div>
   </header>
 
   <!-- META STRIP -->
   <div class="meta-strip" id="metaStrip">
-    <div class="meta-left">
-      <div class="meta-block">
-        <div class="meta-block-label">Location</div>
-        <div class="meta-block-value">
-          <span class="pulse-dot" id="pulseDot"></span>
-          <span id="stationName">Acquiring…</span>
-        </div>
-      </div>
-      <div class="meta-block">
-        <div class="meta-block-label">NOAA Station</div>
-        <div class="meta-block-value" id="stationId">—</div>
-      </div>
+    <div class="meta-item">
+      <span class="pulse-dot" id="pulseDot"></span>
+      <span class="meta-val meta-station-name" id="stationName">Acquiring…</span>
     </div>
-    <div class="meta-right">
-      <div class="meta-block meta-block--datetime">
-        <div class="meta-block-label">Date &amp; Time</div>
-        <div class="meta-block-value" id="infoDatetime">—</div>
-      </div>
-      <div class="meta-block meta-block--tide">
-        <div class="meta-block-label">Tide Level</div>
-        <div class="meta-block-value" id="infoTideNum">—</div>
-      </div>
+    <div class="meta-sep"></div>
+    <div class="meta-item">
+      <span class="meta-lbl">STATION</span>
+      <span class="meta-val" id="stationId">—</span>
+    </div>
+    <div class="meta-sep"></div>
+    <div class="meta-item">
+      <span class="meta-lbl">COORDINATES</span>
+      <span class="meta-val" id="metaCoords">—</span>
     </div>
   </div>
 
@@ -108,8 +99,22 @@
             <g id="hlOnChart"></g>
             <rect id="tideBorder" x="0" y="14" width="1000" height="264" fill="none" stroke="#1e3a5f" stroke-width="0.8"/>
           </svg>
-          <svg id="timeAxis" viewBox="0 0 1000 22" style="height:22px;display:block"></svg>
         </div>
+
+        <!-- Fixed pointer info strip — anchored to pointer, doesn't scroll -->
+        <div class="pointer-info-strip" id="pointerInfoStrip">
+          <div class="pointer-info-block">
+            <div class="pointer-info-label">Date &amp; Time</div>
+            <div class="pointer-info-value" id="infoDatetime">—</div>
+          </div>
+          <div class="pointer-info-block">
+            <div class="pointer-info-label">Tide Level</div>
+            <div class="pointer-info-value" id="infoTideNum">—</div>
+          </div>
+        </div>
+
+        <!-- Fixed time axis — doesn't scroll -->
+        <svg id="timeAxis" viewBox="0 0 1000 22" style="height:22px;display:block;width:100%"></svg>
       </div>
 
     </div>
