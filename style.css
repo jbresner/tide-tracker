@@ -232,6 +232,7 @@ body {
   display: flex;
   align-items: stretch;
   padding: 0;
+  position: relative;
 }
 
 /* Fixed label column */
@@ -323,22 +324,19 @@ body {
 
 /* ── POINTER INFO STRIP ── */
 .pointer-info-strip {
-  position: relative;
+  position: absolute;
+  left: calc(50% + 10px);
+  bottom: 28px;
+  z-index: 11;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0.4rem 0;
-  padding-left: 50%;
-  background: #080d19;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  overflow: hidden;
+  flex-direction: row;
+  gap: 2rem;
+  pointer-events: none;
 }
 .pointer-info-block {
   display: flex;
-  gap: 1rem;
-  align-items: baseline;
+  flex-direction: column;
+  gap: 2px;
 }
 .pointer-info-label {
   font-family: var(--font-mono);

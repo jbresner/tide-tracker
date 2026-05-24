@@ -583,7 +583,7 @@ function updatePointerInfo() {
   const dayName=dayStr[0]+dayStr.slice(1).toLowerCase();
   const monName=monStr[0]+monStr.slice(1).toLowerCase();
 
-  $('infoDatetime').textContent=`${dayName}, ${monName} ${d.getDate()} · ${fmt12fromMins(mins)}`;
+  $('infoDatetime').textContent=`${dayName}, ${monName} ${d.getDate()} ${fmt12fromMins(mins)}`;
   const tideEl=$('infoTideNum');
   if(tideEl){
     tideEl.innerHTML=`<span style="font-size:0.75em;line-height:1;vertical-align:middle">${rising?'▲':'▼'}</span> ${h.toFixed(2)} ft`;
