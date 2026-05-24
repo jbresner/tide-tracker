@@ -327,7 +327,7 @@ body {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 11px;
+  bottom: 2px;
   z-index: 11;
   display: flex;
   flex-direction: row;
@@ -337,6 +337,47 @@ body {
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 6px 14px;
+  margin-top: 8px;
+}
+.pointer-info-strip::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 8px solid var(--border);
+}
+.pointer-info-strip::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 7px solid var(--bg-panel);
+}
+.pointer-info-strip::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 7px solid var(--border);
+}
+.pointer-info-strip::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid var(--bg-panel);
 }
 .pointer-info-block {
   display: flex;
