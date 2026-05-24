@@ -94,13 +94,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1.5rem;
+  padding: 0 1.5rem;
+  height: 56px;
+  min-height: 56px;
+  max-height: 56px;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
   flex-wrap: nowrap;
   opacity: 0;
   transition: opacity 0.4s ease;
   gap: 1rem;
+  overflow: hidden;
 }
 .meta-left {
   display: flex;
@@ -111,6 +115,13 @@ body {
   display: flex;
   gap: 2rem;
   align-items: center;
+  flex-shrink: 0;
+}
+.meta-block--datetime {
+  min-width: 200px;
+}
+.meta-block--tide {
+  min-width: 130px;
 }
 .meta-block {
   display: flex;
